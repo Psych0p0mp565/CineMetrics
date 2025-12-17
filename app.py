@@ -638,9 +638,9 @@ with tab2:
 with tab3:
     st.markdown('<div class="section-title">💵 Financial Analysis</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
-
-with col1:
+    fin_col1, fin_col2 = st.columns(2)
+    
+    with fin_col1:
         top_profit = filtered_df.nlargest(10, 'profit')
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -652,8 +652,8 @@ with col1:
         fig.update_layout(title="🏆 Most Profitable", yaxis={'categoryorder': 'total ascending'})
         style_chart(fig, 450)
         st.plotly_chart(fig, use_container_width=True)
-
-with col2:
+    
+    with fin_col2:
         flops = filtered_df[filtered_df['budget'] > 1e7].nsmallest(10, 'profit')
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -773,9 +773,9 @@ with tab5:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-with col1:
+    
+    col1, col2 = st.columns(2)
+    with col1:
         st.caption("Sequential: Revenue (low → high)")
         top = filtered_df.nlargest(5, 'revenue')
         fig = px.bar(top, y='original_title', x='revenue', orientation='h',
@@ -841,7 +841,7 @@ with tab6:
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         search = st.text_input("🔍 Search", placeholder="Enter movie title...")
-with col2:
+    with col2:
         sort_by = st.selectbox("Sort by", ['revenue', 'profit', 'vote_average', 'popularity', 'year'])
     with col3:
         sort_order = st.selectbox("Order", ['Descending', 'Ascending'])
