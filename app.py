@@ -601,16 +601,16 @@ with tab1:
                 """, unsafe_allow_html=True)
     
     # Charts
-    col1, col2 = st.columns(2)
-
-with col1:
+    chart_col1, chart_col2 = st.columns(2)
+    
+    with chart_col1:
         genre_rev = filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(8).reset_index()
         fig = px.pie(genre_rev, values='revenue', names='primary_genre', hole=0.5,
                     title="Revenue by Genre", color_discrete_sequence=COLORS)
         style_chart(fig, 380)
         st.plotly_chart(fig, use_container_width=True)
-
-with col2:
+    
+    with chart_col2:
         yearly = filtered_df.groupby('year').agg({'revenue': 'sum', 'original_title': 'count'}).reset_index()
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Bar(x=yearly['year'], y=yearly['original_title'], name='Movies', marker_color='#22d3ee'), secondary_y=False)
@@ -660,12 +660,16 @@ with tab2:
     """, unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
-    movie_list = filtered_df.nlargest(200, 'revenue')['original_title'].tolist()
+    movie_list = filtered_df.nlargest(200, 'revenue')['original_title'].tolist() if len(filtered_df) > 0 else []
     
-    with col1:
-        movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
-    with col2:
-        movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1), key='m2')
+    if len(movie_list) > 0:
+        with col1:
+            movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
+        with col2:
+            movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1) if len(movie_list) > 1 else 0, key='m2')
+    else:
+        st.info("No movies available with current filters. Adjust filters to see movies.")
+        movie1, movie2 = None, None
     
     if movie1 and movie2 and len(filtered_df) > 0:
         m1 = filtered_df[filtered_df['original_title'] == movie1].iloc[0]
@@ -697,17 +701,22 @@ with tab2:
     # Genre Drill-Down
     st.markdown('<div class="section-title">🔍 Genre Deep Dive</div>', unsafe_allow_html=True)
     
-    selected_genre = st.selectbox("Select a genre to explore", sorted(filtered_df['primary_genre'].unique()))
+    genre_list = sorted(filtered_df['primary_genre'].unique()) if len(filtered_df) > 0 else []
     
-    genre_df = filtered_df[filtered_df['primary_genre'] == selected_genre]
-    
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Movies", len(genre_df))
-    col2.metric("Avg Revenue", f"${genre_df['revenue'].mean()/1e6:.0f}M")
-    col3.metric("Avg Rating", f"{genre_df['vote_average'].mean():.1f}")
-    col4.metric("Success Rate", f"{genre_df['is_profitable'].mean()*100:.0f}%")
-    
-    st.dataframe(genre_df.nlargest(10, 'revenue')[['original_title', 'year', 'revenue', 'profit', 'vote_average']], use_container_width=True)
+    if len(genre_list) > 0:
+        selected_genre = st.selectbox("Select a genre to explore", genre_list)
+        
+        genre_df = filtered_df[filtered_df['primary_genre'] == selected_genre]
+        
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Movies", len(genre_df))
+        col2.metric("Avg Revenue", f"${genre_df['revenue'].mean()/1e6:.0f}M" if len(genre_df) > 0 else "$0M")
+        col3.metric("Avg Rating", f"{genre_df['vote_average'].mean():.1f}" if len(genre_df) > 0 else "0.0")
+        col4.metric("Success Rate", f"{genre_df['is_profitable'].mean()*100:.0f}%" if len(genre_df) > 0 else "0%")
+        
+        st.dataframe(genre_df.nlargest(10, 'revenue')[['original_title', 'year', 'revenue', 'profit', 'vote_average']], use_container_width=True)
+    else:
+        st.info("No genres available with current filters.")
 
 # ============================================
 # TAB 3: FINANCIAL
@@ -746,7 +755,8 @@ with tab3:
     # Budget vs Revenue
     st.markdown('<div class="section-title">💰 Budget vs Revenue</div>', unsafe_allow_html=True)
     
-    scatter = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].sample(min(400, len(filtered_df)))
+    scatter_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)]
+    scatter = scatter_data.sample(min(400, len(scatter_data))) if len(scatter_data) > 0 else scatter_data
     fig = px.scatter(scatter, x='budget', y='revenue', color='is_profitable',
                     color_discrete_map={True: '#10b981', False: '#ef4444'},
                     hover_name='original_title', size='popularity',
@@ -827,7 +837,8 @@ with tab5:
     
     with col2:
         st.caption("📈 Scatter: Relationships")
-        s = filtered_df[(filtered_df['budget']>0)&(filtered_df['revenue']>0)].sample(min(80,len(filtered_df)))
+        scatter_subset = filtered_df[(filtered_df['budget']>0)&(filtered_df['revenue']>0)]
+        s = scatter_subset.sample(min(80, len(scatter_subset))) if len(scatter_subset) > 0 else scatter_subset
         fig = px.scatter(s, x='budget', y='revenue', color_discrete_sequence=['#10b981'])
         style_chart(fig, 220)
         st.plotly_chart(fig, use_container_width=True)
