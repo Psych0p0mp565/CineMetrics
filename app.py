@@ -446,6 +446,9 @@ genre_colors = {
     'Crime': 'horror', 'Fantasy': 'drama'
 }
 
+# Build seats HTML once
+seats_html = ''.join(['<div class="seat"></div>' for _ in range(24)])
+
 cards_html = '<div class="spotlight-container">'
 for _, row in genre_data.iterrows():
     genre = row['primary_genre']
@@ -462,7 +465,7 @@ for _, row in genre_data.iterrows():
             <div class="cinema-badge">⭐ {rating:.1f} AVG RATING</div>
         </div>
         <div class="cinema-seats">
-            {"".join(['<div class="seat"></div>' for _ in range(24)])}
+            {seats_html}
         </div>
     </div>
     '''
@@ -525,15 +528,15 @@ with tab1:
     
     # Charts
     col1, col2 = st.columns(2)
-    
-    with col1:
+
+with col1:
         genre_rev = filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(8).reset_index()
         fig = px.pie(genre_rev, values='revenue', names='primary_genre', hole=0.5,
                     title="Revenue by Genre", color_discrete_sequence=COLORS)
         style_chart(fig, 380)
         st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
+
+with col2:
         yearly = filtered_df.groupby('year').agg({'revenue': 'sum', 'original_title': 'count'}).reset_index()
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Bar(x=yearly['year'], y=yearly['original_title'], name='Movies', marker_color='#22d3ee'), secondary_y=False)
@@ -773,9 +776,9 @@ with tab5:
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
+
+col1, col2 = st.columns(2)
+with col1:
         st.caption("Sequential: Revenue (low → high)")
         top = filtered_df.nlargest(5, 'revenue')
         fig = px.bar(top, y='original_title', x='revenue', orientation='h',
@@ -841,7 +844,7 @@ with tab6:
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         search = st.text_input("🔍 Search", placeholder="Enter movie title...")
-    with col2:
+with col2:
         sort_by = st.selectbox("Sort by", ['revenue', 'profit', 'vote_average', 'popularity', 'year'])
     with col3:
         sort_order = st.selectbox("Order", ['Descending', 'Ascending'])
