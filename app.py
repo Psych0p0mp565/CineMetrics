@@ -170,6 +170,125 @@ st.markdown("""
     [data-testid="stMetricValue"] { font-weight: 700 !important; color: #22d3ee !important; }
     [data-testid="stMetricLabel"] { color: #a1a1aa !important; }
     
+    /* Cinema Spotlight Cards */
+    .spotlight-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        padding: 20px 0;
+        overflow-x: auto;
+    }
+    
+    .cinema-card {
+        position: relative;
+        width: 280px;
+        height: 200px;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    
+    .cinema-card:hover {
+        transform: scale(1.05) translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    
+    .cinema-card.action { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+    .cinema-card.comedy { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+    .cinema-card.drama { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); }
+    .cinema-card.scifi { background: linear-gradient(135deg, #0891b2 0%, #155e75 100%); }
+    .cinema-card.horror { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); }
+    
+    .cinema-screen {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 100px;
+        background: linear-gradient(180deg, #18181b 0%, #27272a 100%);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255,255,255,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .cinema-logo {
+        font-size: 0.65rem;
+        color: #22d3ee;
+        font-weight: 600;
+        letter-spacing: 2px;
+        margin-bottom: 5px;
+    }
+    
+    .cinema-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fafafa;
+        text-align: center;
+    }
+    
+    .cinema-badge {
+        background: rgba(255,255,255,0.9);
+        color: #18181b;
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 4px;
+        margin-top: 8px;
+        letter-spacing: 0.5px;
+    }
+    
+    .cinema-seats {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 3px;
+        padding: 10px;
+        background: linear-gradient(180deg, transparent, rgba(0,0,0,0.3));
+    }
+    
+    .seat {
+        width: 12px;
+        height: 10px;
+        background: rgba(34, 211, 238, 0.4);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .spotlight-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #10b981;
+    }
+    
+    .spotlight-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fafafa;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .spotlight-more {
+        font-size: 0.85rem;
+        color: #10b981;
+        font-weight: 500;
+    }
+    
     #MainMenu, footer, .stDeployButton { display: none; }
     </style>
 """, unsafe_allow_html=True)
@@ -302,6 +421,54 @@ for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
             <div class="stat-label">{label}</div>
         </div>
         """, unsafe_allow_html=True)
+
+# ============================================
+# GENRE SPOTLIGHTS (Cinema Cards)
+# ============================================
+st.markdown("""
+<div class="spotlight-header">
+    <div class="spotlight-title">🎬 GENRE SPOTLIGHTS</div>
+    <div class="spotlight-more">Explore by Genre →</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Get top genres data
+genre_data = filtered_df.groupby('primary_genre').agg({
+    'revenue': 'sum', 'original_title': 'count', 'vote_average': 'mean'
+}).reset_index()
+genre_data = genre_data.nlargest(5, 'revenue')
+
+# Cinema card colors for different genres
+genre_colors = {
+    'Action': 'action', 'Comedy': 'comedy', 'Drama': 'drama', 
+    'Adventure': 'scifi', 'Thriller': 'horror', 'Science Fiction': 'scifi',
+    'Horror': 'horror', 'Romance': 'comedy', 'Animation': 'scifi',
+    'Crime': 'horror', 'Fantasy': 'drama'
+}
+
+cards_html = '<div class="spotlight-container">'
+for _, row in genre_data.iterrows():
+    genre = row['primary_genre']
+    color_class = genre_colors.get(genre, 'drama')
+    movie_count = int(row['original_title'])
+    revenue = row['revenue'] / 1e9
+    rating = row['vote_average']
+    
+    cards_html += f'''
+    <div class="cinema-card {color_class}">
+        <div class="cinema-screen">
+            <div class="cinema-logo">CINEMETRICS</div>
+            <div class="cinema-title">{genre}</div>
+            <div class="cinema-badge">⭐ {rating:.1f} AVG RATING</div>
+        </div>
+        <div class="cinema-seats">
+            {"".join(['<div class="seat"></div>' for _ in range(24)])}
+        </div>
+    </div>
+    '''
+cards_html += '</div>'
+
+st.markdown(cards_html, unsafe_allow_html=True)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
