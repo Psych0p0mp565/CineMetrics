@@ -1,0 +1,104 @@
+Total rows: 10866
+Total columns: 22
+Complete rows: 1992
+Incomplete rows: 8874
+
+Top 10 Columns with Missing Values:
+                                    Column  Missing Values  Missing %
+homepage                          homepage            7930      72.98
+tagline                            tagline            2824      25.99
+keywords                          keywords            1493      13.74
+production_companies  production_companies            1030       9.48
+cast                                  cast              76       0.70
+director                          director              44       0.40
+genres                              genres              23       0.21
+imdb_id                            imdb_id              10       0.09
+overview                          overview               4       0.04
+revenue                            revenue               0       0.00
+
+Top 10 Most Common Genre Combos:
+genres
+Comedy                  712
+Drama                   712
+Documentary             312
+Drama|Romance           289
+Comedy|Drama            280
+Comedy|Romance          268
+Horror|Thriller         259
+Horror                  253
+Comedy|Drama|Romance    222
+Drama|Thriller          138
+
+Average Budget and Revenue:
+budget     1.462570e+07
+revenue    3.982332e+07
+
+Top 5 Most Profitable Movies:
+                    original_title     budget     revenue      profit
+1386                        Avatar  237000000  2781505847  2544505847
+3     Star Wars: The Force Awakens  200000000  2068178225  1868178225
+5231                       Titanic  200000000  1845034188  1645034188
+0                   Jurassic World  150000000  1513528810  1363528810
+4                        Furious 7  190000000  1506249360  1316249360
+
+High Revenue Movies Without Taglines:
+                       original_title    revenue
+53                                Joy  101134059
+1396   Ice Age: Dawn of the Dinosaurs  886686817
+1466         The Time Traveler's Wife  101229792
+3406            Mr. Popper's Penguins  187361754
+3429                Midnight in Paris  151119219
+4425                          Lincoln  275293450
+4458                           Flight  161772375
+5448                We're the Millers  269994119
+5452            G.I. Joe: Retaliation  371876278
+6570                 Superman Returns  391081192
+8464      The Hunchback of Notre Dame  100138851
+9035              The Horse Whisperer  186883563
+9105                The Rugrats Movie  100491683
+10009               Presumed Innocent  221303188
+10208                  A Star Is Born  161000000
+10231                 A Perfect World  135130999
+10274                       The Piano  116700000
+10654                      Love Story  136400000
+
+Movies with 0 budget: 5696
+Movies with 0 revenue: 6016
+
+Top 5 Most Profitable Directors:
+director
+Steven Spielberg    7428613772
+Peter Jackson       5196468949
+James Cameron       5081849077
+Michael Bay         3557208171
+David Yates         3379295625
+
+Top 5 Most Productive Release Years:
+release_year
+2014    700
+2013    659
+2015    629
+2012    588
+2011    540
+
+Correlation: Runtime vs Revenue:
+          runtime   revenue
+runtime  1.000000  0.162838
+revenue  0.162838  1.000000
+
+Correlation: Popularity vs Revenue:
+            popularity   revenue
+popularity    1.000000  0.663358
+revenue       0.663358  1.000000
+
+Most Common Individual Genres (split):
+Drama: 4761
+Comedy: 3793
+Thriller: 2908
+Action: 2385
+Romance: 1712
+Horror: 1637
+Adventure: 1471
+Crime: 1355
+Family: 1231
+Science Fiction: 1230
