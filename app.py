@@ -451,17 +451,7 @@ with st.sidebar:
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
 
 # ============================================
-# HEADER
-# ============================================
-st.markdown("""
-<div class="header">
-    <div class="logo">Cine<span>Metrics</span> 🎬</div>
-    <div class="tagline">Interactive Movie Analytics Dashboard</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ============================================
-# MAIN TABS (at the top)
+# MAIN TABS (at the very top)
 # ============================================
 tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
     "🎓 Concepts", "📊 Dashboard", "🎮 Interactive", "💵 Financial", "🎭 Genres", "🔍 Explorer"
@@ -775,16 +765,16 @@ with tab4:
         'is_profitable': 'mean', 'original_title': 'count'
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
+
+col1, col2 = st.columns(2)
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
+with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
                         color_continuous_scale='Teal', title="Market Share (size = revenue, color = rating)")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
+with col2:
         top_g = genre_stats.nlargest(8, 'Count')
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
