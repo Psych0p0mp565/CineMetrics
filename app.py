@@ -144,25 +144,70 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* Tabs */
+    /* Tabs with distinct colors */
     .stTabs [data-baseweb="tab-list"] {
-        background: #27272a;
+        background: #1a1a1d;
         border-radius: 12px;
-        padding: 6px;
-        gap: 4px;
+        padding: 8px;
+        gap: 6px;
+        border: 1px solid #2a2a2e;
     }
     
     .stTabs [data-baseweb="tab"] {
-        background: transparent;
+        background: #27272a;
         border-radius: 8px;
         color: #a1a1aa;
         font-weight: 500;
         padding: 12px 20px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
     }
     
-    .stTabs [aria-selected="true"] {
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #3f3f46;
+        color: #fafafa;
+    }
+    
+    /* Tab 1: Concepts - Purple/Violet */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
+        background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
+        color: #fff !important;
+        border-color: #a855f7 !important;
+    }
+    
+    /* Tab 2: Dashboard - Cyan */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
         background: linear-gradient(135deg, #22d3ee, #0891b2) !important;
         color: #000 !important;
+        border-color: #22d3ee !important;
+    }
+    
+    /* Tab 3: Interactive - Green/Teal */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] {
+        background: linear-gradient(135deg, #34d399, #10b981) !important;
+        color: #000 !important;
+        border-color: #34d399 !important;
+    }
+    
+    /* Tab 4: Financial - Orange/Amber */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(4)[aria-selected="true"] {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+        color: #000 !important;
+        border-color: #fbbf24 !important;
+    }
+    
+    /* Tab 5: Genres - Pink/Rose */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(5)[aria-selected="true"] {
+        background: linear-gradient(135deg, #f472b6, #ec4899) !important;
+        color: #000 !important;
+        border-color: #f472b6 !important;
+    }
+    
+    /* Tab 6: Explorer - Blue */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(6)[aria-selected="true"] {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+        color: #000 !important;
+        border-color: #60a5fa !important;
     }
     
     /* Sidebar */
@@ -506,8 +551,8 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ============================================
 # MAIN TABS
 # ============================================
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "📊 Dashboard", "🎮 Interactive", "💵 Financial", "🎭 Genres", "🎓 Concepts", "🔍 Explorer"
+tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
+    "🎓 Concepts", "📊 Dashboard", "🎮 Interactive", "💵 Financial", "🎭 Genres", "🔍 Explorer"
 ])
 
 # ============================================
@@ -755,7 +800,7 @@ with tab4:
 # ============================================
 # TAB 5: VISUALIZATION CONCEPTS
 # ============================================
-with tab5:
+with tab_concepts:
     st.markdown('<div class="section-title">🎓 Data Visualization Concepts</div>', unsafe_allow_html=True)
     
     st.markdown("""
