@@ -460,96 +460,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Stats Row
-col1, col2, col3, col4, col5 = st.columns(5)
-stats = [
-    ("🎬", f"{len(filtered_df):,}", "Movies"),
-    ("💰", f"${filtered_df['revenue'].sum()/1e9:.1f}B", "Revenue"),
-    ("📈", f"${filtered_df['profit'].sum()/1e9:.1f}B", "Profit"),
-    ("⭐", f"{filtered_df['vote_average'].mean():.1f}", "Avg Rating"),
-    ("✅", f"{filtered_df['is_profitable'].mean()*100:.0f}%", "Success")
-]
-
-for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
-    with col:
-        st.markdown(f"""
-        <div class="stat-card">
-            <div class="stat-icon">{icon}</div>
-            <div class="stat-value">{val}</div>
-            <div class="stat-label">{label}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
 # ============================================
-# GENRE PERFORMANCE OVERVIEW
-# ============================================
-st.markdown("""
-<div style="display: flex; align-items: center; justify-content: space-between; 
-            margin: 25px 0 20px 0; padding-bottom: 12px; border-bottom: 1px solid #3f3f46;">
-    <div style="font-size: 0.9rem; font-weight: 600; color: #a1a1aa; 
-                text-transform: uppercase; letter-spacing: 2px;">
-        Genre Performance
-    </div>
-    <div style="font-size: 0.75rem; color: #52525b;">Top 5 by Revenue</div>
-</div>
-""", unsafe_allow_html=True)
-
-# Get top genres data
-genre_data = filtered_df.groupby('primary_genre').agg({
-    'revenue': 'sum', 'original_title': 'count', 'vote_average': 'mean'
-}).reset_index()
-genre_data = genre_data.nlargest(5, 'revenue')
-
-# Display genre cards using Streamlit columns
-genre_cols = st.columns(5)
-
-# Calculate max revenue for percentage bar
-max_rev = genre_data['revenue'].max()
-
-for i, (_, row) in enumerate(genre_data.iterrows()):
-    genre = row['primary_genre']
-    movie_count = int(row['original_title'])
-    revenue = row['revenue'] / 1e9
-    rating = row['vote_average']
-    rev_percent = (row['revenue'] / max_rev) * 100
-    
-    with genre_cols[i]:
-        st.markdown(f"""
-        <div style="background: linear-gradient(180deg, #1c1c1e 0%, #141416 100%); 
-                    border: 1px solid #2a2a2e; border-radius: 12px; 
-                    padding: 20px 16px; text-align: left; height: 200px;
-                    position: relative; overflow: hidden;">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px;
-                        background: linear-gradient(90deg, #22d3ee, #f59e0b);"></div>
-            <div style="font-size: 0.65rem; color: #52525b; text-transform: uppercase; 
-                        letter-spacing: 1px; margin-bottom: 8px;">Genre</div>
-            <div style="font-size: 1rem; font-weight: 600; color: #fafafa; 
-                        margin-bottom: 16px; line-height: 1.2;">{genre}</div>
-            <div style="margin-bottom: 12px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #22d3ee;">${revenue:.1f}B</div>
-                <div style="font-size: 0.65rem; color: #52525b; margin-top: 2px;">Total Revenue</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <div>
-                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{rating:.1f}</div>
-                    <div style="font-size: 0.6rem; color: #52525b;">Avg Rating</div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{movie_count:,}</div>
-                    <div style="font-size: 0.6rem; color: #52525b;">Films</div>
-                </div>
-            </div>
-            <div style="background: #27272a; border-radius: 2px; height: 4px; margin-top: 12px;">
-                <div style="background: linear-gradient(90deg, #22d3ee, #f59e0b); 
-                            height: 100%; width: {rev_percent:.0f}%; border-radius: 2px;"></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-
-# ============================================
-# MAIN TABS
+# MAIN TABS (at the top)
 # ============================================
 tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
     "🎓 Concepts", "📊 Dashboard", "🎮 Interactive", "💵 Financial", "🎭 Genres", "🔍 Explorer"
@@ -559,6 +471,93 @@ tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
 # TAB 1: DASHBOARD
 # ============================================
 with tab1:
+    # Stats Row
+    col1, col2, col3, col4, col5 = st.columns(5)
+    stats = [
+        ("🎬", f"{len(filtered_df):,}", "Movies"),
+        ("💰", f"${filtered_df['revenue'].sum()/1e9:.1f}B", "Revenue"),
+        ("📈", f"${filtered_df['profit'].sum()/1e9:.1f}B", "Profit"),
+        ("⭐", f"{filtered_df['vote_average'].mean():.1f}", "Avg Rating"),
+        ("✅", f"{filtered_df['is_profitable'].mean()*100:.0f}%", "Success")
+    ]
+
+    for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
+        with col:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-icon">{icon}</div>
+                <div class="stat-value">{val}</div>
+                <div class="stat-label">{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ============================================
+    # GENRE PERFORMANCE OVERVIEW
+    # ============================================
+    st.markdown("""
+    <div style="display: flex; align-items: center; justify-content: space-between; 
+                margin: 25px 0 20px 0; padding-bottom: 12px; border-bottom: 1px solid #3f3f46;">
+        <div style="font-size: 0.9rem; font-weight: 600; color: #a1a1aa; 
+                    text-transform: uppercase; letter-spacing: 2px;">
+            Genre Performance
+        </div>
+        <div style="font-size: 0.75rem; color: #52525b;">Top 5 by Revenue</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Get top genres data
+    genre_data = filtered_df.groupby('primary_genre').agg({
+        'revenue': 'sum', 'original_title': 'count', 'vote_average': 'mean'
+    }).reset_index()
+    genre_data = genre_data.nlargest(5, 'revenue')
+
+    # Display genre cards using Streamlit columns
+    genre_cols = st.columns(5)
+
+    # Calculate max revenue for percentage bar
+    max_rev = genre_data['revenue'].max()
+
+    for i, (_, row) in enumerate(genre_data.iterrows()):
+        genre = row['primary_genre']
+        movie_count = int(row['original_title'])
+        revenue = row['revenue'] / 1e9
+        rating = row['vote_average']
+        rev_percent = (row['revenue'] / max_rev) * 100
+        
+        with genre_cols[i]:
+            st.markdown(f"""
+            <div style="background: linear-gradient(180deg, #1c1c1e 0%, #141416 100%); 
+                        border: 1px solid #2a2a2e; border-radius: 12px; 
+                        padding: 20px 16px; text-align: left; height: 200px;
+                        position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px;
+                            background: linear-gradient(90deg, #22d3ee, #f59e0b);"></div>
+                <div style="font-size: 0.65rem; color: #52525b; text-transform: uppercase; 
+                            letter-spacing: 1px; margin-bottom: 8px;">Genre</div>
+                <div style="font-size: 1rem; font-weight: 600; color: #fafafa; 
+                            margin-bottom: 16px; line-height: 1.2;">{genre}</div>
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #22d3ee;">${revenue:.1f}B</div>
+                    <div style="font-size: 0.65rem; color: #52525b; margin-top: 2px;">Total Revenue</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{rating:.1f}</div>
+                        <div style="font-size: 0.6rem; color: #52525b;">Avg Rating</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{movie_count:,}</div>
+                        <div style="font-size: 0.6rem; color: #52525b;">Films</div>
+                    </div>
+                </div>
+                <div style="background: #27272a; border-radius: 2px; height: 4px; margin-top: 12px;">
+                    <div style="background: linear-gradient(90deg, #22d3ee, #f59e0b); 
+                                height: 100%; width: {rev_percent:.0f}%; border-radius: 2px;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">📊 Overview</div>', unsafe_allow_html=True)
     
     # Top Insights
