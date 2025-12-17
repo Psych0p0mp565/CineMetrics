@@ -24,8 +24,67 @@ st.markdown("""
     
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     
+    /* Animated Background */
     .stApp {
-        background: linear-gradient(180deg, #09090b 0%, #18181b 100%);
+        background: linear-gradient(180deg, #09090b 0%, #0a0a0c 50%, #09090b 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 60% 60%, rgba(5, 150, 105, 0.05) 0%, transparent 40%);
+        animation: backgroundFloat 20s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .stApp::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(ellipse at 0% 100%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+        animation: backgroundPulse 15s ease-in-out infinite alternate;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    @keyframes backgroundFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(2%, 2%) rotate(1deg); }
+        50% { transform: translate(0, 4%) rotate(0deg); }
+        75% { transform: translate(-2%, 2%) rotate(-1deg); }
+    }
+    
+    @keyframes backgroundPulse {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+    }
+    
+    /* Ensure content stays above background */
+    .main .block-container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        position: relative;
+        z-index: 1;
     }
     
     /* Header */
