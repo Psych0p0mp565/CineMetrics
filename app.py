@@ -144,13 +144,25 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* Tabs with distinct colors */
+    /* Tabs with distinct colors - Sticky at top */
     .stTabs [data-baseweb="tab-list"] {
         background: #1a1a1d;
         border-radius: 12px;
         padding: 8px;
         gap: 6px;
         border: 1px solid #2a2a2e;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+    
+    /* Make the tabs container sticky */
+    div[data-testid="stTabs"] > div:first-child {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: #09090b;
+        padding: 10px 0;
     }
     
     .stTabs [data-baseweb="tab"] {
