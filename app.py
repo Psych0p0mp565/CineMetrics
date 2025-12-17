@@ -520,7 +520,7 @@ with tab1:
     col1, col2, col3 = st.columns(3)
     
     if len(filtered_df) > 0:
-with col1:
+        with col1:
             top = filtered_df.loc[filtered_df['revenue'].idxmax()]
             st.markdown(f"""
             <div class="info-card">
@@ -529,8 +529,8 @@ with col1:
                 <div class="info-desc">${top['revenue']/1e9:.2f}B • {int(top['year']) if pd.notna(top['year']) else 'N/A'}</div>
             </div>
             """, unsafe_allow_html=True)
-
-with col2:
+        
+        with col2:
             rated = filtered_df[filtered_df['vote_count'] >= 500]
             if len(rated) > 0:
                 best = rated.loc[rated['vote_average'].idxmax()]
@@ -621,7 +621,7 @@ with tab2:
             movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
         with col2:
             movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1) if len(movie_list) > 1 else 0, key='m2')
-else:
+    else:
         st.info("No movies available with current filters. Adjust filters to see movies.")
         movie1, movie2 = None, None
     
@@ -731,8 +731,8 @@ with tab4:
         'is_profitable': 'mean', 'original_title': 'count'
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
-
-col1, col2 = st.columns(2)
+    
+    col1, col2 = st.columns(2)
     
     with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
@@ -782,14 +782,14 @@ with tab5:
     """, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
-with col1:
+    with col1:
         st.caption("📊 Bar: Compare categories")
         fig = px.bar(filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(5).reset_index(),
                     x='primary_genre', y='revenue', color_discrete_sequence=['#22d3ee'])
         style_chart(fig, 220)
         st.plotly_chart(fig, use_container_width=True)
     
-with col2:
+    with col2:
         st.caption("📈 Scatter: Relationships")
         scatter_subset = filtered_df[(filtered_df['budget']>0)&(filtered_df['revenue']>0)]
         s = scatter_subset.sample(min(80, len(scatter_subset))) if len(scatter_subset) > 0 else scatter_subset
