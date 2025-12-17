@@ -500,11 +500,11 @@ genre_data = filtered_df.groupby('primary_genre').agg({
 }).reset_index()
 genre_data = genre_data.nlargest(5, 'revenue')
 
-# Display genre cards using Streamlit columns
+# Display genre cards as expandable sections
 genre_cols = st.columns(5)
 
 # Calculate max revenue for percentage bar
-max_rev = genre_data['revenue'].max()
+max_rev = genre_data['revenue'].max() if len(genre_data) > 0 else 1
 
 for i, (_, row) in enumerate(genre_data.iterrows()):
     genre = row['primary_genre']
@@ -513,38 +513,33 @@ for i, (_, row) in enumerate(genre_data.iterrows()):
     rating = row['vote_average']
     rev_percent = (row['revenue'] / max_rev) * 100
     
+    # Get top movies for this genre
+    genre_movies = filtered_df[filtered_df['primary_genre'] == genre].nlargest(5, 'revenue')
+    avg_budget = filtered_df[filtered_df['primary_genre'] == genre]['budget'].mean() / 1e6
+    success_rate = filtered_df[filtered_df['primary_genre'] == genre]['is_profitable'].mean() * 100
+    
     with genre_cols[i]:
-        st.markdown(f"""
-        <div style="background: linear-gradient(180deg, #1c1c1e 0%, #141416 100%); 
-                    border: 1px solid #2a2a2e; border-radius: 12px; 
-                    padding: 20px 16px; text-align: left; height: 200px;
-                    position: relative; overflow: hidden;">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px;
-                        background: linear-gradient(90deg, #22d3ee, #f59e0b);"></div>
-            <div style="font-size: 0.65rem; color: #52525b; text-transform: uppercase; 
-                        letter-spacing: 1px; margin-bottom: 8px;">Genre</div>
-            <div style="font-size: 1rem; font-weight: 600; color: #fafafa; 
-                        margin-bottom: 16px; line-height: 1.2;">{genre}</div>
-            <div style="margin-bottom: 12px;">
-                <div style="font-size: 1.5rem; font-weight: 700; color: #22d3ee;">${revenue:.1f}B</div>
-                <div style="font-size: 0.65rem; color: #52525b; margin-top: 2px;">Total Revenue</div>
+        with st.expander(f"🎬 **{genre}** — ${revenue:.1f}B"):
+            st.markdown(f"""
+            <div style="padding: 10px 0;">
+                <div style="font-size: 2rem; font-weight: 700; color: #22d3ee; margin-bottom: 5px;">${revenue:.1f}B</div>
+                <div style="font-size: 0.75rem; color: #71717a; margin-bottom: 15px;">Total Box Office Revenue</div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <div>
-                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{rating:.1f}</div>
-                    <div style="font-size: 0.6rem; color: #52525b;">Avg Rating</div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{movie_count:,}</div>
-                    <div style="font-size: 0.6rem; color: #52525b;">Films</div>
-                </div>
-            </div>
-            <div style="background: #27272a; border-radius: 2px; height: 4px; margin-top: 12px;">
-                <div style="background: linear-gradient(90deg, #22d3ee, #f59e0b); 
-                            height: 100%; width: {rev_percent:.0f}%; border-radius: 2px;"></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            
+            # Key metrics
+            m1, m2 = st.columns(2)
+            m1.metric("Avg Rating", f"⭐ {rating:.1f}")
+            m2.metric("Films", f"🎥 {movie_count:,}")
+            
+            m3, m4 = st.columns(2)
+            m3.metric("Avg Budget", f"${avg_budget:.0f}M")
+            m4.metric("Success Rate", f"{success_rate:.0f}%")
+            
+            # Top movies in genre
+            st.markdown("**🏆 Top Movies:**")
+            for _, movie in genre_movies.head(3).iterrows():
+                st.markdown(f"• {movie['original_title']} (${movie['revenue']/1e6:.0f}M)")
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -561,43 +556,49 @@ tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
 with tab1:
     st.markdown('<div class="section-title">📊 Overview</div>', unsafe_allow_html=True)
     
-    # Top Insights
+    # Top Insights - Expandable Cards
     col1, col2, col3 = st.columns(3)
     
     if len(filtered_df) > 0:
         with col1:
             top = filtered_df.loc[filtered_df['revenue'].idxmax()]
-            st.markdown(f"""
-            <div class="info-card">
-                <div class="info-label">🏆 Highest Grossing</div>
-                <div class="info-value">{top['original_title']}</div>
-                <div class="info-desc">${top['revenue']/1e9:.2f}B • {int(top['year']) if pd.notna(top['year']) else 'N/A'}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            with st.expander(f"🏆 **{top['original_title']}** — ${top['revenue']/1e9:.2f}B"):
+                st.markdown("### Highest Grossing Movie")
+                st.metric("Box Office", f"${top['revenue']/1e6:,.0f}M")
+                st.metric("Budget", f"${top['budget']/1e6:,.0f}M")
+                st.metric("Profit", f"${top['profit']/1e6:,.0f}M")
+                st.markdown(f"**Director:** {top['director'] if pd.notna(top['director']) else 'Unknown'}")
+                st.markdown(f"**Year:** {int(top['year']) if pd.notna(top['year']) else 'N/A'}")
+                st.markdown(f"**Genre:** {top['genres'] if pd.notna(top['genres']) else 'Unknown'}")
+                st.markdown(f"**Rating:** ⭐ {top['vote_average']:.1f}/10 ({int(top['vote_count']):,} votes)")
         
         with col2:
             rated = filtered_df[filtered_df['vote_count'] >= 500]
             if len(rated) > 0:
                 best = rated.loc[rated['vote_average'].idxmax()]
-                st.markdown(f"""
-                <div class="info-card">
-                    <div class="info-label">⭐ Top Rated</div>
-                    <div class="info-value">{best['original_title']}</div>
-                    <div class="info-desc">{best['vote_average']:.1f}/10 • {int(best['vote_count']):,} votes</div>
-                </div>
-                """, unsafe_allow_html=True)
+                with st.expander(f"⭐ **{best['original_title']}** — {best['vote_average']:.1f}/10"):
+                    st.markdown("### Top Rated Movie")
+                    st.metric("Rating", f"⭐ {best['vote_average']:.1f}/10")
+                    st.metric("Votes", f"{int(best['vote_count']):,}")
+                    st.metric("Revenue", f"${best['revenue']/1e6:,.0f}M")
+                    st.markdown(f"**Director:** {best['director'] if pd.notna(best['director']) else 'Unknown'}")
+                    st.markdown(f"**Year:** {int(best['year']) if pd.notna(best['year']) else 'N/A'}")
+                    st.markdown(f"**Genre:** {best['genres'] if pd.notna(best['genres']) else 'Unknown'}")
+                    if pd.notna(best['tagline']):
+                        st.markdown(f"*\"{best['tagline']}\"*")
         
         with col3:
             profit_df = filtered_df[filtered_df['budget'] >= 1e6]
             if len(profit_df) > 0:
                 best_roi = profit_df.loc[profit_df['roi'].idxmax()]
-                st.markdown(f"""
-                <div class="info-card">
-                    <div class="info-label">💎 Best ROI</div>
-                    <div class="info-value">{best_roi['original_title']}</div>
-                    <div class="info-desc">{best_roi['roi']:.0f}% return • ${best_roi['budget']/1e6:.0f}M budget</div>
-                </div>
-                """, unsafe_allow_html=True)
+                with st.expander(f"💎 **{best_roi['original_title']}** — {best_roi['roi']:.0f}% ROI"):
+                    st.markdown("### Best Return on Investment")
+                    st.metric("ROI", f"{best_roi['roi']:,.0f}%")
+                    st.metric("Budget", f"${best_roi['budget']/1e6:,.0f}M")
+                    st.metric("Revenue", f"${best_roi['revenue']/1e6:,.0f}M")
+                    st.metric("Profit", f"${best_roi['profit']/1e6:,.0f}M")
+                    st.markdown(f"**Director:** {best_roi['director'] if pd.notna(best_roi['director']) else 'Unknown'}")
+                    st.markdown(f"**Year:** {int(best_roi['year']) if pd.notna(best_roi['year']) else 'N/A'}")
     
     # Charts
     chart_col1, chart_col2 = st.columns(2)
