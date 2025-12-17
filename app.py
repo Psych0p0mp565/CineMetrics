@@ -423,12 +423,16 @@ for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
         """, unsafe_allow_html=True)
 
 # ============================================
-# GENRE SPOTLIGHTS (Simple Cards)
+# GENRE PERFORMANCE OVERVIEW
 # ============================================
 st.markdown("""
-<div class="spotlight-header">
-    <div class="spotlight-title">🎬 GENRE SPOTLIGHTS</div>
-    <div class="spotlight-more">Top Genres by Revenue</div>
+<div style="display: flex; align-items: center; justify-content: space-between; 
+            margin: 25px 0 20px 0; padding-bottom: 12px; border-bottom: 1px solid #3f3f46;">
+    <div style="font-size: 0.9rem; font-weight: 600; color: #a1a1aa; 
+                text-transform: uppercase; letter-spacing: 2px;">
+        Genre Performance
+    </div>
+    <div style="font-size: 0.75rem; color: #52525b;">Top 5 by Revenue</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -440,28 +444,47 @@ genre_data = genre_data.nlargest(5, 'revenue')
 
 # Display genre cards using Streamlit columns
 genre_cols = st.columns(5)
-genre_icons = {'Action': '💥', 'Comedy': '😂', 'Drama': '🎭', 'Adventure': '🗺️', 
-               'Thriller': '😱', 'Science Fiction': '🚀', 'Horror': '👻', 
-               'Romance': '💕', 'Animation': '🎨', 'Crime': '🔫', 'Fantasy': '🧙'}
+
+# Calculate max revenue for percentage bar
+max_rev = genre_data['revenue'].max()
 
 for i, (_, row) in enumerate(genre_data.iterrows()):
     genre = row['primary_genre']
-    icon = genre_icons.get(genre, '🎬')
     movie_count = int(row['original_title'])
     revenue = row['revenue'] / 1e9
     rating = row['vote_average']
+    rev_percent = (row['revenue'] / max_rev) * 100
     
     with genre_cols[i]:
         st.markdown(f"""
-        <div style="background: linear-gradient(145deg, #27272a, #18181b); 
-                    border: 1px solid #3f3f46; border-radius: 16px; 
-                    padding: 20px; text-align: center; 
-                    transition: all 0.3s ease; height: 180px;">
-            <div style="font-size: 2.5rem; margin-bottom: 10px;">{icon}</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #fafafa; margin-bottom: 8px;">{genre}</div>
-            <div style="font-size: 0.8rem; color: #22d3ee; margin-bottom: 4px;">⭐ {rating:.1f} Rating</div>
-            <div style="font-size: 0.75rem; color: #71717a;">{movie_count} Movies</div>
-            <div style="font-size: 0.75rem; color: #10b981;">${revenue:.1f}B Revenue</div>
+        <div style="background: linear-gradient(180deg, #1c1c1e 0%, #141416 100%); 
+                    border: 1px solid #2a2a2e; border-radius: 12px; 
+                    padding: 20px 16px; text-align: left; height: 200px;
+                    position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px;
+                        background: linear-gradient(90deg, #22d3ee, #10b981);"></div>
+            <div style="font-size: 0.65rem; color: #52525b; text-transform: uppercase; 
+                        letter-spacing: 1px; margin-bottom: 8px;">Genre</div>
+            <div style="font-size: 1rem; font-weight: 600; color: #fafafa; 
+                        margin-bottom: 16px; line-height: 1.2;">{genre}</div>
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #22d3ee;">${revenue:.1f}B</div>
+                <div style="font-size: 0.65rem; color: #52525b; margin-top: 2px;">Total Revenue</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <div>
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{rating:.1f}</div>
+                    <div style="font-size: 0.6rem; color: #52525b;">Avg Rating</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #fafafa;">{movie_count:,}</div>
+                    <div style="font-size: 0.6rem; color: #52525b;">Films</div>
+                </div>
+            </div>
+            <div style="background: #27272a; border-radius: 2px; height: 4px; margin-top: 12px;">
+                <div style="background: linear-gradient(90deg, #22d3ee, #10b981); 
+                            height: 100%; width: {rev_percent:.0f}%; border-radius: 2px;"></div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
