@@ -423,12 +423,12 @@ for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
         """, unsafe_allow_html=True)
 
 # ============================================
-# GENRE SPOTLIGHTS (Cinema Cards)
+# GENRE SPOTLIGHTS (Simple Cards)
 # ============================================
 st.markdown("""
 <div class="spotlight-header">
     <div class="spotlight-title">🎬 GENRE SPOTLIGHTS</div>
-    <div class="spotlight-more">Explore by Genre →</div>
+    <div class="spotlight-more">Top Genres by Revenue</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -438,40 +438,32 @@ genre_data = filtered_df.groupby('primary_genre').agg({
 }).reset_index()
 genre_data = genre_data.nlargest(5, 'revenue')
 
-# Cinema card colors for different genres
-genre_colors = {
-    'Action': 'action', 'Comedy': 'comedy', 'Drama': 'drama', 
-    'Adventure': 'scifi', 'Thriller': 'horror', 'Science Fiction': 'scifi',
-    'Horror': 'horror', 'Romance': 'comedy', 'Animation': 'scifi',
-    'Crime': 'horror', 'Fantasy': 'drama'
-}
+# Display genre cards using Streamlit columns
+genre_cols = st.columns(5)
+genre_icons = {'Action': '💥', 'Comedy': '😂', 'Drama': '🎭', 'Adventure': '🗺️', 
+               'Thriller': '😱', 'Science Fiction': '🚀', 'Horror': '👻', 
+               'Romance': '💕', 'Animation': '🎨', 'Crime': '🔫', 'Fantasy': '🧙'}
 
-# Build seats HTML once
-seats_html = ''.join(['<div class="seat"></div>' for _ in range(24)])
-
-cards_html = '<div class="spotlight-container">'
-for _, row in genre_data.iterrows():
+for i, (_, row) in enumerate(genre_data.iterrows()):
     genre = row['primary_genre']
-    color_class = genre_colors.get(genre, 'drama')
+    icon = genre_icons.get(genre, '🎬')
     movie_count = int(row['original_title'])
     revenue = row['revenue'] / 1e9
     rating = row['vote_average']
     
-    cards_html += f'''
-    <div class="cinema-card {color_class}">
-        <div class="cinema-screen">
-            <div class="cinema-logo">CINEMETRICS</div>
-            <div class="cinema-title">{genre}</div>
-            <div class="cinema-badge">⭐ {rating:.1f} AVG RATING</div>
+    with genre_cols[i]:
+        st.markdown(f"""
+        <div style="background: linear-gradient(145deg, #27272a, #18181b); 
+                    border: 1px solid #3f3f46; border-radius: 16px; 
+                    padding: 20px; text-align: center; 
+                    transition: all 0.3s ease; height: 180px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">{icon}</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fafafa; margin-bottom: 8px;">{genre}</div>
+            <div style="font-size: 0.8rem; color: #22d3ee; margin-bottom: 4px;">⭐ {rating:.1f} Rating</div>
+            <div style="font-size: 0.75rem; color: #71717a;">{movie_count} Movies</div>
+            <div style="font-size: 0.75rem; color: #10b981;">${revenue:.1f}B Revenue</div>
         </div>
-        <div class="cinema-seats">
-            {seats_html}
-        </div>
-    </div>
-    '''
-cards_html += '</div>'
-
-st.markdown(cards_html, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
