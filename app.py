@@ -776,9 +776,9 @@ with tab5:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-with col1:
+    
+    color_col1, color_col2 = st.columns(2)
+    with color_col1:
         st.caption("Sequential: Revenue (low → high)")
         top = filtered_df.nlargest(5, 'revenue')
         fig = px.bar(top, y='original_title', x='revenue', orientation='h',
@@ -787,7 +787,7 @@ with col1:
         style_chart(fig, 250)
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
+    with color_col2:
         st.caption("Diverging: Profit (red) vs Loss (green)")
         sample = pd.concat([filtered_df[filtered_df['budget']>1e7].nlargest(3,'profit'),
                           filtered_df[filtered_df['budget']>1e7].nsmallest(3,'profit')])
@@ -841,12 +841,12 @@ with col1:
 with tab6:
     st.markdown('<div class="section-title">🔍 Movie Explorer</div>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
+    search_col1, search_col2, search_col3 = st.columns([2, 1, 1])
+    with search_col1:
         search = st.text_input("🔍 Search", placeholder="Enter movie title...")
-with col2:
+    with search_col2:
         sort_by = st.selectbox("Sort by", ['revenue', 'profit', 'vote_average', 'popularity', 'year'])
-    with col3:
+    with search_col3:
         sort_order = st.selectbox("Order", ['Descending', 'Ascending'])
     
     results = filtered_df.copy()
