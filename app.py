@@ -28,7 +28,7 @@ st.markdown("""
     .stApp {
         background: 
             radial-gradient(ellipse at 0% 100%, rgba(34, 211, 238, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
             radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 70%),
             linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
         background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
@@ -88,7 +88,7 @@ st.markdown("""
         color: #fafafa;
         margin: 30px 0 20px 0;
         padding-bottom: 12px;
-        border-bottom: 2px solid #10b981;
+        border-bottom: 2px solid #f59e0b;
         display: inline-block;
     }
     
@@ -104,7 +104,7 @@ st.markdown("""
     
     .info-card:hover { border-color: #22d3ee; }
     
-    .info-label { font-size: 0.7rem; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .info-label { font-size: 0.7rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
     .info-value { font-size: 1.2rem; font-weight: 600; color: #fafafa; margin-bottom: 4px; }
     .info-desc { font-size: 0.85rem; color: #a1a1aa; }
     
@@ -174,7 +174,7 @@ st.markdown("""
     /* Divider */
     .divider {
         height: 1px;
-        background: linear-gradient(90deg, transparent, #10b981, transparent);
+        background: linear-gradient(90deg, transparent, #f59e0b, transparent);
         margin: 30px 0;
     }
     
@@ -283,7 +283,7 @@ st.markdown("""
         justify-content: space-between;
         margin: 30px 0 15px 0;
         padding-bottom: 10px;
-        border-bottom: 2px solid #10b981;
+        border-bottom: 2px solid #f59e0b;
     }
     
     .spotlight-title {
@@ -297,7 +297,7 @@ st.markdown("""
     
     .spotlight-more {
         font-size: 0.85rem;
-        color: #10b981;
+        color: #f59e0b;
         font-weight: 500;
     }
     
@@ -339,8 +339,9 @@ def style_chart(fig, height=400):
     )
     return fig
 
-COLORS = ['#22d3ee', '#06b6d4', '#0891b2', '#10b981', '#059669']
-DIVERGING = [[0, '#ef4444'], [0.5, '#52525b'], [1, '#10b981']]
+# Color Blind Friendly Palette (Blue/Orange instead of Red/Green)
+COLORS = ['#22d3ee', '#06b6d4', '#0891b2', '#f59e0b', '#d97706']
+DIVERGING = [[0, '#7c3aed'], [0.5, '#52525b'], [1, '#f59e0b']]  # Purple to Orange
 
 # ============================================
 # SIDEBAR FILTERS
@@ -474,7 +475,7 @@ for i, (_, row) in enumerate(genre_data.iterrows()):
                     padding: 20px 16px; text-align: left; height: 200px;
                     position: relative; overflow: hidden;">
             <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px;
-                        background: linear-gradient(90deg, #22d3ee, #10b981);"></div>
+                        background: linear-gradient(90deg, #22d3ee, #f59e0b);"></div>
             <div style="font-size: 0.65rem; color: #52525b; text-transform: uppercase; 
                         letter-spacing: 1px; margin-bottom: 8px;">Genre</div>
             <div style="font-size: 1rem; font-weight: 600; color: #fafafa; 
@@ -494,7 +495,7 @@ for i, (_, row) in enumerate(genre_data.iterrows()):
                 </div>
             </div>
             <div style="background: #27272a; border-radius: 2px; height: 4px; margin-top: 12px;">
-                <div style="background: linear-gradient(90deg, #22d3ee, #10b981); 
+                <div style="background: linear-gradient(90deg, #22d3ee, #f59e0b); 
                             height: 100%; width: {rev_percent:.0f}%; border-radius: 2px;"></div>
             </div>
         </div>
@@ -519,7 +520,7 @@ with tab1:
     col1, col2, col3 = st.columns(3)
     
     if len(filtered_df) > 0:
-        with col1:
+with col1:
             top = filtered_df.loc[filtered_df['revenue'].idxmax()]
             st.markdown(f"""
             <div class="info-card">
@@ -528,8 +529,8 @@ with tab1:
                 <div class="info-desc">${top['revenue']/1e9:.2f}B • {int(top['year']) if pd.notna(top['year']) else 'N/A'}</div>
             </div>
             """, unsafe_allow_html=True)
-        
-        with col2:
+
+with col2:
             rated = filtered_df[filtered_df['vote_count'] >= 500]
             if len(rated) > 0:
                 best = rated.loc[rated['vote_average'].idxmax()]
@@ -567,7 +568,7 @@ with tab1:
         yearly = filtered_df.groupby('year').agg({'revenue': 'sum', 'original_title': 'count'}).reset_index()
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Bar(x=yearly['year'], y=yearly['original_title'], name='Movies', marker_color='#22d3ee'), secondary_y=False)
-        fig.add_trace(go.Scatter(x=yearly['year'], y=yearly['revenue'], name='Revenue', line=dict(color='#10b981', width=3)), secondary_y=True)
+        fig.add_trace(go.Scatter(x=yearly['year'], y=yearly['revenue'], name='Revenue', line=dict(color='#f59e0b', width=3)), secondary_y=True)
         fig.update_layout(title="Movies & Revenue by Year")
         style_chart(fig, 380)
         st.plotly_chart(fig, use_container_width=True)
@@ -620,7 +621,7 @@ with tab2:
             movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
         with col2:
             movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1) if len(movie_list) > 1 else 0, key='m2')
-    else:
+else:
         st.info("No movies available with current filters. Adjust filters to see movies.")
         movie1, movie2 = None, None
     
@@ -632,7 +633,7 @@ with tab2:
         
         fig = go.Figure()
         fig.add_trace(go.Bar(name=movie1[:20], x=metrics, y=[m1[m] for m in metrics], marker_color='#22d3ee'))
-        fig.add_trace(go.Bar(name=movie2[:20], x=metrics, y=[m2[m] for m in metrics], marker_color='#10b981'))
+        fig.add_trace(go.Bar(name=movie2[:20], x=metrics, y=[m2[m] for m in metrics], marker_color='#f59e0b'))
         fig.update_layout(barmode='group', title="Side-by-Side Comparison")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
@@ -697,7 +698,7 @@ with tab3:
         fig = go.Figure()
         fig.add_trace(go.Bar(
             y=flops['original_title'], x=flops['profit'], orientation='h',
-            marker_color='#ef4444',
+            marker_color='#7c3aed',
             text=[f"-${abs(x)/1e6:.0f}M" for x in flops['profit']],
             textposition='inside', textfont=dict(color='white')
         ))
@@ -711,9 +712,9 @@ with tab3:
     scatter_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)]
     scatter = scatter_data.sample(min(400, len(scatter_data))) if len(scatter_data) > 0 else scatter_data
     fig = px.scatter(scatter, x='budget', y='revenue', color='is_profitable',
-                    color_discrete_map={True: '#10b981', False: '#ef4444'},
+                    color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
                     hover_name='original_title', size='popularity',
-                    title="Each dot is a movie • Green = Profit, Red = Loss")
+                    title="Each dot is a movie • Orange = Profit, Purple = Loss")
     fig.add_trace(go.Scatter(x=[0, scatter['budget'].max()], y=[0, scatter['budget'].max()],
                             mode='lines', name='Break-even', line=dict(dash='dash', color='#71717a')))
     style_chart(fig, 500)
@@ -730,8 +731,8 @@ with tab4:
         'is_profitable': 'mean', 'original_title': 'count'
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
-    
-    col1, col2 = st.columns(2)
+
+col1, col2 = st.columns(2)
     
     with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
@@ -781,18 +782,18 @@ with tab5:
     """, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
-    with col1:
+with col1:
         st.caption("📊 Bar: Compare categories")
         fig = px.bar(filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(5).reset_index(),
                     x='primary_genre', y='revenue', color_discrete_sequence=['#22d3ee'])
         style_chart(fig, 220)
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
+with col2:
         st.caption("📈 Scatter: Relationships")
         scatter_subset = filtered_df[(filtered_df['budget']>0)&(filtered_df['revenue']>0)]
         s = scatter_subset.sample(min(80, len(scatter_subset))) if len(scatter_subset) > 0 else scatter_subset
-        fig = px.scatter(s, x='budget', y='revenue', color_discrete_sequence=['#10b981'])
+        fig = px.scatter(s, x='budget', y='revenue', color_discrete_sequence=['#f59e0b'])
         style_chart(fig, 220)
         st.plotly_chart(fig, use_container_width=True)
     
@@ -826,7 +827,7 @@ with tab5:
         st.plotly_chart(fig, use_container_width=True)
     
     with color_col2:
-        st.caption("Diverging: Profit (red) vs Loss (green)")
+        st.caption("Diverging: Profit (orange) vs Loss (purple)")
         sample = pd.concat([filtered_df[filtered_df['budget']>1e7].nlargest(3,'profit'),
                           filtered_df[filtered_df['budget']>1e7].nsmallest(3,'profit')])
         fig = px.bar(sample, y='original_title', x='profit', orientation='h',
@@ -868,7 +869,7 @@ with tab5:
     avg = yearly['revenue'].mean()
     fig.add_hline(y=avg, line_dash="dash", line_color="#71717a", annotation_text=f"Average: ${avg/1e6:.0f}M")
     peak = yearly.loc[yearly['revenue'].idxmax()]
-    fig.add_annotation(x=peak['year'], y=peak['revenue'], text="Peak Year ↑", showarrow=True, arrowhead=2, arrowcolor='#10b981')
+    fig.add_annotation(x=peak['year'], y=peak['revenue'], text="Peak Year ↑", showarrow=True, arrowhead=2, arrowcolor='#f59e0b')
     fig.update_layout(title="Average Revenue by Year (Annotated)")
     style_chart(fig, 350)
     st.plotly_chart(fig, use_container_width=True)
