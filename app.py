@@ -150,45 +150,34 @@ st.markdown("""
         z-index: 1;
     }
     
-    /* Ensure scrolling works - fix all containers */
-    html {
-        overflow-y: scroll !important;
+    /* Ensure scrolling works properly */
+    html, body {
         overflow-x: hidden !important;
-    }
-    
-    body {
         overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: auto !important;
-        min-height: 100vh !important;
     }
     
-    #root {
-        overflow-y: auto !important;
+    /* Streamlit app container */
+    .stApp {
         overflow-x: hidden !important;
-        height: auto !important;
-    }
-    
-    /* Fix for Streamlit's main container */
-    [data-testid="stAppViewContainer"] {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        height: auto !important;
-    }
-    
-    .main {
         overflow-y: visible !important;
-        overflow-x: hidden !important;
-        height: auto !important;
     }
     
-    /* Ensure fixed elements don't block scrolling */
+    /* Main content area */
+    .main {
+        overflow: visible !important;
+    }
+    
+    /* Streamlit view container */
+    [data-testid="stAppViewContainer"] {
+        overflow: visible !important;
+    }
+    
+    /* Ensure fixed elements don't block */
     .title-bar,
     div[data-testid="stTabs"] > div:first-child {
         pointer-events: auto;
     }
     
-    /* Ensure content can scroll past fixed header */
     section[data-testid="stSidebar"] {
         position: relative !important;
         z-index: 1;
@@ -504,9 +493,9 @@ st.markdown("""
         100% { transform: rotate(360deg); }
     }
     
-    /* Title bar - fixed at top */
+    /* Title bar - sticky at top */
     .title-bar {
-        position: fixed;
+        position: sticky;
         top: 0;
         left: 0;
         right: 0;
@@ -515,6 +504,7 @@ st.markdown("""
         padding: 20px 0;
         border-bottom: 1px solid #27272a;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        margin-bottom: 0;
     }
     
     .title-content {
@@ -522,6 +512,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         text-align: center;
+        max-width: 100%;
     }
     
     .title-logo {
@@ -534,24 +525,28 @@ st.markdown("""
     
     .title-logo span { color: #22d3ee; }
     
-    /* Tabs container - fixed below title */
+    /* Tabs container - sticky below title */
     div[data-testid="stTabs"] > div:first-child {
-        position: fixed !important;
+        position: sticky !important;
         top: 80px !important;
-        left: 0 !important;
-        right: 0 !important;
         z-index: 999 !important;
         background: #09090b;
         padding: 12px 0;
+        margin-bottom: 20px;
         border-bottom: 1px solid #27272a;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    
+    /* Center tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        margin: 0 auto;
         display: flex;
         justify-content: center;
     }
     
-    /* Add padding to main content to account for fixed header */
+    /* Remove extra padding from main content */
     .main .block-container {
-        padding-top: 140px !important;
+        padding-top: 20px !important;
     }
     
     /* Tabs styling - Enhanced */
@@ -752,6 +747,18 @@ st.markdown("""
     .main .block-container {
         padding-left: 2rem;
         padding-right: 2rem;
+        max-width: 100%;
+    }
+    
+    /* Ensure proper alignment */
+    .main {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Fix column alignment */
+    [data-testid="column"] {
+        width: 100% !important;
     }
     
     /* Improved scrollbar */
@@ -1049,14 +1056,27 @@ st.markdown("""
     <div class="shape"></div>
 </div>
 <script>
-    // Ensure scrolling is enabled
+    // Ensure scrolling is enabled and alignment is correct
     (function() {
+        // Enable scrolling
         document.documentElement.style.overflowY = 'auto';
         document.body.style.overflowY = 'auto';
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.overflowX = 'hidden';
+        
+        // Fix app container
         var appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
         if (appContainer) {
             appContainer.style.overflowY = 'auto';
+            appContainer.style.overflowX = 'hidden';
             appContainer.style.height = 'auto';
+        }
+        
+        // Ensure main content is properly aligned
+        var mainContainer = document.querySelector('.main .block-container');
+        if (mainContainer) {
+            mainContainer.style.maxWidth = '100%';
+            mainContainer.style.width = '100%';
         }
     })();
 </script>
