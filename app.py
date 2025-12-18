@@ -697,7 +697,7 @@ with tab1:
         fig = px.box(box_data, x='primary_genre', y='revenue', 
                     title="Revenue Distribution by Genre",
                     color='primary_genre', color_discrete_sequence=COLORS)
-        fig.update_yaxis(type="log")
+        fig.update_yaxes(type="log")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
     
