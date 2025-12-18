@@ -144,69 +144,71 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* Sticky Header Bar */
-    .sticky-header {
+    /* Hide default Streamlit header to make room for our nav */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    
+    /* Top Navigation Bar - Fixed at very top */
+    .top-nav-bar {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        z-index: 1000;
-        background: linear-gradient(180deg, #09090b 0%, rgba(9,9,11,0.95) 100%);
-        backdrop-filter: blur(10px);
+        z-index: 1001;
+        background: linear-gradient(180deg, #09090b 0%, #0d0d0f 100%);
         border-bottom: 1px solid #27272a;
-        padding: 12px 20px;
-    }
-    
-    .sticky-header-content {
+        padding: 8px 20px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        max-width: 1400px;
-        margin: 0 auto;
+        gap: 30px;
     }
     
-    .header-logo {
-        font-size: 1.5rem;
+    .nav-logo {
+        font-size: 1.3rem;
         font-weight: 700;
         color: #fafafa;
         letter-spacing: -0.5px;
+        white-space: nowrap;
     }
     
-    .header-logo span { color: #22d3ee; }
+    .nav-logo span { color: #22d3ee; }
     
-    /* Content padding to account for sticky header */
-    .main-content-wrapper {
-        padding-top: 70px;
+    /* Tabs positioned at very top */
+    div[data-testid="stTabs"] > div:first-child {
+        position: fixed !important;
+        top: 0 !important;
+        left: 160px !important;
+        right: 120px !important;
+        z-index: 1000;
+        background: #09090b;
+        padding: 8px 0;
+        display: flex;
+        justify-content: center;
     }
     
-    /* Tabs with distinct colors - Sticky below header */
+    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(180deg, #1a1a1d 0%, #141416 100%);
-        border-radius: 12px;
-        padding: 10px 12px;
-        gap: 8px;
+        border-radius: 10px;
+        padding: 6px 10px;
+        gap: 6px;
         border: 1px solid #2a2a2e;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     
-    /* Make the tabs container sticky below header */
-    div[data-testid="stTabs"] > div:first-child {
-        position: sticky;
-        top: 60px;
-        z-index: 999;
-        background: linear-gradient(180deg, #09090b 0%, rgba(9,9,11,0.98) 100%);
-        backdrop-filter: blur(10px);
-        padding: 15px 0;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #27272a;
+    /* Add padding to main content to account for fixed nav */
+    .main .block-container {
+        padding-top: 70px !important;
     }
     
     .stTabs [data-baseweb="tab"] {
         background: #27272a;
-        border-radius: 8px;
+        border-radius: 6px;
         color: #a1a1aa;
         font-weight: 500;
-        padding: 12px 20px;
+        font-size: 0.85rem;
+        padding: 8px 16px;
         border: 1px solid transparent;
         transition: all 0.2s ease;
     }
@@ -499,20 +501,16 @@ with st.sidebar:
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
 
 # ============================================
-# STICKY HEADER
+# TOP NAVIGATION BAR WITH TITLE
 # ============================================
 st.markdown("""
-<div class="sticky-header">
-    <div class="sticky-header-content">
-        <div class="header-logo">🎬 Cine<span>Metrics</span></div>
-        <div style="font-size: 0.8rem; color: #71717a;">Movie Analytics Dashboard</div>
-    </div>
+<div class="top-nav-bar">
+    <div class="nav-logo">🎬 Cine<span>Metrics</span></div>
 </div>
-<div class="main-content-wrapper"></div>
 """, unsafe_allow_html=True)
 
 # ============================================
-# MAIN TABS (Sticky below header)
+# MAIN TABS (Fixed at top, in line with Deploy)
 # ============================================
 tab1, tab6, tab3, tab2, tab4, tab_concepts = st.tabs([
     "📊 Dashboard", "🔍 Explorer", "💵 Financial", "🎮 Interactive", "🎭 Genres", "🎓 Concepts"
