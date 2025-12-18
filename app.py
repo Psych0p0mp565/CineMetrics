@@ -648,7 +648,7 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Charts
+    # Charts Row 1
     chart_col1, chart_col2 = st.columns(2)
     
     with chart_col1:
@@ -665,6 +665,99 @@ with tab1:
         fig.add_trace(go.Scatter(x=yearly['year'], y=yearly['revenue'], name='Revenue', line=dict(color='#f59e0b', width=3)), secondary_y=True)
         fig.update_layout(title="Movies & Revenue by Year")
         style_chart(fig, 380)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts Row 2 - New Visualizations
+    st.markdown('<div class="section-title">📈 Advanced Analytics</div>', unsafe_allow_html=True)
+    
+    chart_col3, chart_col4 = st.columns(2)
+    
+    with chart_col3:
+        # Correlation Heatmap
+        numeric_cols = ['budget', 'revenue', 'profit', 'vote_average', 'popularity', 'vote_count', 'runtime']
+        corr_data = filtered_df[numeric_cols].corr()
+        fig = go.Figure(data=go.Heatmap(
+            z=corr_data.values,
+            x=corr_data.columns,
+            y=corr_data.columns,
+            colorscale='Teal',
+            text=corr_data.values.round(2),
+            texttemplate='%{text}',
+            textfont={"size": 10},
+            colorbar=dict(title="Correlation")
+        ))
+        fig.update_layout(title="📊 Correlation Heatmap", height=400)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with chart_col4:
+        # Box Plot - Revenue Distribution by Genre
+        top_genres = filtered_df['primary_genre'].value_counts().head(8).index
+        box_data = filtered_df[filtered_df['primary_genre'].isin(top_genres)]
+        fig = px.box(box_data, x='primary_genre', y='revenue', 
+                    title="Revenue Distribution by Genre",
+                    color='primary_genre', color_discrete_sequence=COLORS)
+        fig.update_yaxis(type="log")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts Row 3
+    chart_col5, chart_col6 = st.columns(2)
+    
+    with chart_col5:
+        # Month Release Heatmap
+        month_data = filtered_df.groupby(['year', 'month']).agg({
+            'revenue': 'sum',
+            'original_title': 'count'
+        }).reset_index()
+        month_pivot = month_data.pivot(index='month', columns='year', values='revenue').fillna(0)
+        fig = go.Figure(data=go.Heatmap(
+            z=month_pivot.values,
+            x=month_pivot.columns,
+            y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            colorscale='Viridis',
+            colorbar=dict(title="Revenue ($)")
+        ))
+        fig.update_layout(title="📅 Release Month Heatmap (Revenue by Month & Year)", height=400)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with chart_col6:
+        # Bubble Chart - Budget vs Revenue vs Rating
+        bubble_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(200)
+        fig = px.scatter(bubble_data, x='budget', y='revenue', size='vote_count',
+                        color='vote_average', hover_name='original_title',
+                        color_continuous_scale='Teal',
+                        title="Budget vs Revenue (Size = Votes, Color = Rating)",
+                        labels={'budget': 'Budget ($)', 'revenue': 'Revenue ($)', 'vote_average': 'Rating'})
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts Row 4
+    chart_col7, chart_col8 = st.columns(2)
+    
+    with chart_col7:
+        # Violin Plot - Rating Distribution by Genre
+        top_genres_v = filtered_df['primary_genre'].value_counts().head(6).index
+        violin_data = filtered_df[filtered_df['primary_genre'].isin(top_genres_v)]
+        fig = px.violin(violin_data, x='primary_genre', y='vote_average',
+                       color='primary_genre', color_discrete_sequence=COLORS,
+                       title="Rating Distribution by Genre (Violin Plot)")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with chart_col8:
+        # Sunburst Chart - Genre Hierarchy
+        genre_decade = filtered_df.groupby(['primary_genre', 'decade']).agg({
+            'revenue': 'sum',
+            'original_title': 'count'
+        }).reset_index()
+        top_genres_s = genre_decade.groupby('primary_genre')['revenue'].sum().nlargest(6).index
+        sunburst_data = genre_decade[genre_decade['primary_genre'].isin(top_genres_s)]
+        fig = px.sunburst(sunburst_data, path=['primary_genre', 'decade'], values='revenue',
+                         color='revenue', color_continuous_scale='Teal',
+                         title="Genre & Decade Hierarchy (Sunburst)")
+        style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
@@ -765,6 +858,58 @@ with tab2:
         st.dataframe(genre_df.nlargest(10, 'revenue')[['original_title', 'year', 'revenue', 'profit', 'vote_average']], use_container_width=True)
     else:
         st.info("No genres available with current filters.")
+    
+    # Additional Interactive Visualizations
+    st.markdown('<div class="section-title">📊 Advanced Interactive Charts</div>', unsafe_allow_html=True)
+    
+    int_row1_col1, int_row1_col2 = st.columns(2)
+    
+    with int_row1_col1:
+        # Density Contour Plot
+        density_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(500)
+        fig = px.density_contour(density_data, x='budget', y='revenue',
+                                color='vote_average',
+                                title="Budget vs Revenue Density (Contour Plot)")
+        fig.update_traces(contours_coloring="fill", contours_showlabels=True)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with int_row1_col2:
+        # 3D Scatter Plot
+        scatter_3d_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(200)
+        fig = px.scatter_3d(scatter_3d_data, x='budget', y='revenue', z='vote_average',
+                           color='is_profitable',
+                           color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
+                           hover_name='original_title',
+                           title="3D: Budget vs Revenue vs Rating",
+                           labels={'budget': 'Budget', 'revenue': 'Revenue', 'vote_average': 'Rating'})
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    int_row2_col1, int_row2_col2 = st.columns(2)
+    
+    with int_row2_col1:
+        # Strip Plot - Rating Distribution
+        strip_data = filtered_df[filtered_df['primary_genre'].isin(
+            filtered_df['primary_genre'].value_counts().head(6).index
+        )]
+        fig = px.strip(strip_data, x='primary_genre', y='vote_average',
+                      color='is_profitable',
+                      color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
+                      title="Rating Distribution by Genre (Strip Plot)")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with int_row2_col2:
+        # Area Chart - Revenue Trends by Genre
+        area_data = filtered_df.groupby(['year', 'primary_genre'])['revenue'].sum().reset_index()
+        top_genres_area = area_data.groupby('primary_genre')['revenue'].sum().nlargest(5).index
+        area_filtered = area_data[area_data['primary_genre'].isin(top_genres_area)]
+        fig = px.area(area_filtered, x='year', y='revenue', color='primary_genre',
+                     title="Revenue Trends by Genre (Area Chart)",
+                     color_discrete_sequence=COLORS)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
 # TAB 3: FINANCIAL
@@ -809,10 +954,89 @@ with tab3:
                     color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
                     hover_name='original_title', size='popularity',
                     title="Each dot is a movie • Orange = Profit, Purple = Loss")
-    fig.add_trace(go.Scatter(x=[0, scatter['budget'].max()], y=[0, scatter['budget'].max()],
-                            mode='lines', name='Break-even', line=dict(dash='dash', color='#71717a')))
+    if len(scatter) > 0:
+        fig.add_trace(go.Scatter(x=[0, scatter['budget'].max()], y=[0, scatter['budget'].max()],
+                                mode='lines', name='Break-even', line=dict(dash='dash', color='#71717a')))
     style_chart(fig, 500)
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Additional Financial Visualizations
+    st.markdown('<div class="section-title">📊 Financial Deep Dive</div>', unsafe_allow_html=True)
+    
+    fin_row1_col1, fin_row1_col2 = st.columns(2)
+    
+    with fin_row1_col1:
+        # ROI Distribution Histogram
+        roi_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['roi'].notna())]
+        fig = px.histogram(roi_data, x='roi', nbins=50, 
+                          title="ROI Distribution",
+                          labels={'roi': 'ROI (%)', 'count': 'Number of Movies'},
+                          color_discrete_sequence=['#22d3ee'])
+        fig.add_vline(x=0, line_dash="dash", line_color="#71717a", annotation_text="Break-even")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with fin_row1_col2:
+        # Profit/Loss by Decade
+        decade_profit = filtered_df.groupby('decade').agg({
+            'profit': 'sum',
+            'original_title': 'count'
+        }).reset_index()
+        fig = go.Figure()
+        colors = ['#f59e0b' if x >= 0 else '#7c3aed' for x in decade_profit['profit']]
+        fig.add_trace(go.Bar(
+            x=decade_profit['decade'],
+            y=decade_profit['profit'],
+            marker_color=colors,
+            text=[f"${x/1e9:.1f}B" if abs(x) >= 1e9 else f"${x/1e6:.0f}M" for x in decade_profit['profit']],
+            textposition='outside'
+        ))
+        fig.update_layout(title="Total Profit by Decade", yaxis_title="Profit ($)")
+        fig.add_hline(y=0, line_dash="dash", line_color="#71717a")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    fin_row2_col1, fin_row2_col2 = st.columns(2)
+    
+    with fin_row2_col1:
+        # Budget Efficiency (Revenue per Budget Dollar)
+        efficiency = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].copy()
+        if len(efficiency) > 0:
+            efficiency['efficiency'] = efficiency['revenue'] / efficiency['budget']
+            top_eff = efficiency.nlargest(15, 'efficiency')
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                y=top_eff['original_title'],
+                x=top_eff['efficiency'],
+                orientation='h',
+                marker_color='#10b981',
+                text=[f"{x:.1f}x" for x in top_eff['efficiency']],
+                textposition='inside'
+            ))
+            fig.update_layout(title="💰 Most Budget-Efficient Movies (Revenue per $)", 
+                            yaxis={'categoryorder': 'total ascending'})
+            style_chart(fig, 450)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with fin_row2_col2:
+        # Cumulative Revenue Over Time
+        yearly_cum = filtered_df.groupby('year').agg({'revenue': 'sum'}).reset_index()
+        yearly_cum = yearly_cum.sort_values('year')
+        yearly_cum['cumulative'] = yearly_cum['revenue'].cumsum()
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=yearly_cum['year'],
+            y=yearly_cum['cumulative'],
+            mode='lines+markers',
+            fill='tozeroy',
+            fillcolor='rgba(34, 211, 238, 0.2)',
+            line=dict(color='#22d3ee', width=3),
+            name='Cumulative Revenue'
+        ))
+        fig.update_layout(title="📈 Cumulative Revenue Over Time",
+                          yaxis_title="Cumulative Revenue ($)")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
 # TAB 4: GENRES
@@ -843,6 +1067,81 @@ with tab4:
         ))
         fig.update_layout(title="Genre Quality Radar",
                          polar=dict(radialaxis=dict(range=[5, 8], gridcolor='#3f3f46'), bgcolor='#27272a'))
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Additional Genre Visualizations
+    st.markdown('<div class="section-title">🎨 Genre Analytics</div>', unsafe_allow_html=True)
+    
+    genre_row1_col1, genre_row1_col2 = st.columns(2)
+    
+    with genre_row1_col1:
+        # Genre Performance Matrix (Heatmap)
+        genre_matrix = filtered_df.groupby(['primary_genre', 'decade']).agg({
+            'revenue': 'mean',
+            'vote_average': 'mean'
+        }).reset_index()
+        top_genres_m = genre_matrix.groupby('primary_genre')['revenue'].sum().nlargest(8).index
+        matrix_data = genre_matrix[genre_matrix['primary_genre'].isin(top_genres_m)]
+        matrix_pivot = matrix_data.pivot(index='primary_genre', columns='decade', values='revenue').fillna(0)
+        fig = go.Figure(data=go.Heatmap(
+            z=matrix_pivot.values,
+            x=matrix_pivot.columns,
+            y=matrix_pivot.index,
+            colorscale='Teal',
+            colorbar=dict(title="Avg Revenue ($)")
+        ))
+        fig.update_layout(title="Genre Performance by Decade (Heatmap)", height=400)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with genre_row1_col2:
+        # Stacked Bar - Genre Revenue Over Time
+        genre_year = filtered_df.groupby(['year', 'primary_genre'])['revenue'].sum().reset_index()
+        top_genres_sb = genre_year.groupby('primary_genre')['revenue'].sum().nlargest(6).index
+        stacked_data = genre_year[genre_year['primary_genre'].isin(top_genres_sb)]
+        fig = px.bar(stacked_data, x='year', y='revenue', color='primary_genre',
+                    title="Genre Revenue Over Time (Stacked)",
+                    color_discrete_sequence=COLORS)
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    genre_row2_col1, genre_row2_col2 = st.columns(2)
+    
+    with genre_row2_col1:
+        # Parallel Coordinates - Multi-dimensional Genre Comparison
+        top_genres_pc = genre_stats.nlargest(8, 'Total Rev')
+        fig = go.Figure(data=go.Parcoords(
+            line=dict(color=top_genres_pc['Avg Rating'],
+                     colorscale='Teal',
+                     showscale=True,
+                     colorbar=dict(title="Rating")),
+            dimensions=list([
+                dict(label='Total Revenue', values=top_genres_pc['Total Rev']),
+                dict(label='Avg Revenue', values=top_genres_pc['Avg Rev']),
+                dict(label='Avg Profit', values=top_genres_pc['Avg Profit']),
+                dict(label='Avg Rating', values=top_genres_pc['Avg Rating']),
+                dict(label='Success Rate', values=top_genres_pc['Success']),
+                dict(label='Count', values=top_genres_pc['Count'])
+            ])
+        ))
+        fig.update_layout(title="Multi-Dimensional Genre Comparison (Parallel Coordinates)")
+        style_chart(fig, 400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with genre_row2_col2:
+        # Funnel Chart - Genre Success Funnel
+        funnel_data = genre_stats.nlargest(10, 'Total Rev')
+        fig = go.Figure(go.Funnel(
+            y=funnel_data['Genre'],
+            x=funnel_data['Total Rev'],
+            textposition="inside",
+            textinfo="value+percent initial",
+            marker=dict(color=funnel_data['Avg Rating'],
+                       colorscale='Teal',
+                       line=dict(color='#27272a', width=2))
+        ))
+        fig.update_layout(title="Genre Revenue Funnel (Top 10)")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
 
