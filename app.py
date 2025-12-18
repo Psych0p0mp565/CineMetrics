@@ -144,25 +144,61 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* Tabs with distinct colors - Sticky at top */
-    .stTabs [data-baseweb="tab-list"] {
-        background: #1a1a1d;
-        border-radius: 12px;
-        padding: 8px;
-        gap: 6px;
-        border: 1px solid #2a2a2e;
-        position: sticky;
+    /* Sticky Header Bar */
+    .sticky-header {
+        position: fixed;
         top: 0;
-        z-index: 999;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: linear-gradient(180deg, #09090b 0%, rgba(9,9,11,0.95) 100%);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #27272a;
+        padding: 12px 20px;
     }
     
-    /* Make the tabs container sticky */
+    .sticky-header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .header-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fafafa;
+        letter-spacing: -0.5px;
+    }
+    
+    .header-logo span { color: #22d3ee; }
+    
+    /* Content padding to account for sticky header */
+    .main-content-wrapper {
+        padding-top: 70px;
+    }
+    
+    /* Tabs with distinct colors - Sticky below header */
+    .stTabs [data-baseweb="tab-list"] {
+        background: linear-gradient(180deg, #1a1a1d 0%, #141416 100%);
+        border-radius: 12px;
+        padding: 10px 12px;
+        gap: 8px;
+        border: 1px solid #2a2a2e;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    /* Make the tabs container sticky below header */
     div[data-testid="stTabs"] > div:first-child {
         position: sticky;
-        top: 0;
+        top: 60px;
         z-index: 999;
-        background: #09090b;
-        padding: 10px 0;
+        background: linear-gradient(180deg, #09090b 0%, rgba(9,9,11,0.98) 100%);
+        backdrop-filter: blur(10px);
+        padding: 15px 0;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #27272a;
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -180,32 +216,32 @@ st.markdown("""
         color: #fafafa;
     }
     
-    /* Tab 1: Concepts - Purple/Violet */
+    /* Tab 1: Dashboard - Cyan */
     .stTabs [data-baseweb="tab-list"] button:nth-child(1)[aria-selected="true"] {
-        background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
-        color: #fff !important;
-        border-color: #a855f7 !important;
-    }
-    
-    /* Tab 2: Dashboard - Cyan */
-    .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
         background: linear-gradient(135deg, #22d3ee, #0891b2) !important;
         color: #000 !important;
         border-color: #22d3ee !important;
     }
     
-    /* Tab 3: Interactive - Green/Teal */
-    .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] {
-        background: linear-gradient(135deg, #34d399, #10b981) !important;
+    /* Tab 2: Explorer - Blue */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(2)[aria-selected="true"] {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
         color: #000 !important;
-        border-color: #34d399 !important;
+        border-color: #60a5fa !important;
     }
     
-    /* Tab 4: Financial - Orange/Amber */
-    .stTabs [data-baseweb="tab-list"] button:nth-child(4)[aria-selected="true"] {
+    /* Tab 3: Financial - Orange/Amber */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(3)[aria-selected="true"] {
         background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
         color: #000 !important;
         border-color: #fbbf24 !important;
+    }
+    
+    /* Tab 4: Interactive - Green/Teal */
+    .stTabs [data-baseweb="tab-list"] button:nth-child(4)[aria-selected="true"] {
+        background: linear-gradient(135deg, #34d399, #10b981) !important;
+        color: #000 !important;
+        border-color: #34d399 !important;
     }
     
     /* Tab 5: Genres - Pink/Rose */
@@ -215,11 +251,11 @@ st.markdown("""
         border-color: #f472b6 !important;
     }
     
-    /* Tab 6: Explorer - Blue */
+    /* Tab 6: Concepts - Purple/Violet */
     .stTabs [data-baseweb="tab-list"] button:nth-child(6)[aria-selected="true"] {
-        background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
-        color: #000 !important;
-        border-color: #60a5fa !important;
+        background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
+        color: #fff !important;
+        border-color: #a855f7 !important;
     }
     
     /* Sidebar */
@@ -463,10 +499,23 @@ with st.sidebar:
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
 
 # ============================================
-# MAIN TABS (at the very top)
+# STICKY HEADER
 # ============================================
-tab_concepts, tab1, tab2, tab3, tab4, tab6 = st.tabs([
-    "🎓 Concepts", "📊 Dashboard", "🎮 Interactive", "💵 Financial", "🎭 Genres", "🔍 Explorer"
+st.markdown("""
+<div class="sticky-header">
+    <div class="sticky-header-content">
+        <div class="header-logo">🎬 Cine<span>Metrics</span></div>
+        <div style="font-size: 0.8rem; color: #71717a;">Movie Analytics Dashboard</div>
+    </div>
+</div>
+<div class="main-content-wrapper"></div>
+""", unsafe_allow_html=True)
+
+# ============================================
+# MAIN TABS (Sticky below header)
+# ============================================
+tab1, tab6, tab3, tab2, tab4, tab_concepts = st.tabs([
+    "📊 Dashboard", "🔍 Explorer", "💵 Financial", "🎮 Interactive", "🎭 Genres", "🎓 Concepts"
 ])
 
 # ============================================
