@@ -43,7 +43,7 @@ st.markdown("""
             radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
         background-size: 200% 200%, 200% 200%, 100% 100%;
         animation: gradientShift 20s ease-in-out infinite;
-        z-index: 0;
+        z-index: -1 !important;
         pointer-events: none;
     }
     
@@ -71,7 +71,7 @@ st.markdown("""
             radial-gradient(2px 2px at 40% 90%, rgba(245, 158, 11, 0.3), transparent);
         background-size: 200% 200%;
         animation: particleMove 25s linear infinite;
-        z-index: 0;
+        z-index: -1 !important;
         pointer-events: none;
     }
     
@@ -88,7 +88,7 @@ st.markdown("""
         width: 100%;
         height: 100vh;
         overflow: visible;
-        z-index: 0;
+        z-index: -1 !important;
         pointer-events: none;
     }
     
@@ -143,11 +143,30 @@ st.markdown("""
     }
     
     /* Ensure content is above background and scrollable */
+    .main,
     .main .block-container,
     section[data-testid="stSidebar"],
-    header[data-testid="stHeader"] {
+    header[data-testid="stHeader"],
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewContainer"] > div {
         position: relative;
-        z-index: 1;
+        z-index: 10 !important;
+    }
+    
+    /* Ensure all Streamlit elements are above background */
+    .stTabs,
+    .stTabs > div,
+    .stMarkdown,
+    .stDataFrame,
+    .stPlotlyChart,
+    .stMetric,
+    .stButton,
+    .stSelectbox,
+    .stSlider,
+    .stTextInput,
+    .stCheckbox {
+        position: relative;
+        z-index: 10 !important;
     }
     
     /* Ensure scrolling works properly */
@@ -1407,7 +1426,7 @@ with tab2:
             movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
         with col2:
             movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1) if len(movie_list) > 1 else 0, key='m2')
-    else:
+else:
         st.info("No movies available with current filters. Adjust filters to see movies.")
         movie1, movie2 = None, None
     
@@ -1649,15 +1668,15 @@ with tab4:
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
 
-    col1, col2 = st.columns(2)
+col1, col2 = st.columns(2)
     
-    with col1:
+with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
                         color_continuous_scale='Teal', title="Market Share (size = revenue, color = rating)")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
+with col2:
         top_g = genre_stats.nlargest(8, 'Count')
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
