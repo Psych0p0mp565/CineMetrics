@@ -1426,7 +1426,7 @@ with tab2:
             movie1 = st.selectbox("🎬 First Movie", movie_list, key='m1')
         with col2:
             movie2 = st.selectbox("🎬 Second Movie", movie_list, index=min(1, len(movie_list)-1) if len(movie_list) > 1 else 0, key='m2')
-else:
+    else:
         st.info("No movies available with current filters. Adjust filters to see movies.")
         movie1, movie2 = None, None
     
