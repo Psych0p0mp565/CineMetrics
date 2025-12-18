@@ -144,62 +144,56 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* Streamlit header - contains our nav */
+    /* Streamlit header styling */
     header[data-testid="stHeader"] {
         background: #09090b !important;
-        height: 50px !important;
         border-bottom: 1px solid #27272a;
     }
     
-    /* Fixed navigation bar at absolute top */
-    .fixed-nav {
-        position: fixed;
+    /* Title bar - sticky at top */
+    .title-bar {
+        position: sticky;
         top: 0;
-        left: 0;
-        right: 0;
-        height: 50px;
-        background: #09090b;
+        z-index: 999;
+        background: linear-gradient(180deg, #09090b 0%, #0d0d0f 100%);
+        padding: 12px 0;
+        margin-bottom: 10px;
         border-bottom: 1px solid #27272a;
+    }
+    
+    .title-content {
         display: flex;
         align-items: center;
-        padding: 0 20px;
-        z-index: 1000;
-        gap: 20px;
+        gap: 15px;
     }
     
-    .nav-title {
-        font-size: 1.2rem;
+    .title-logo {
+        font-size: 1.5rem;
         font-weight: 700;
         color: #fafafa;
-        white-space: nowrap;
+        letter-spacing: -0.5px;
     }
     
-    .nav-title span { color: #22d3ee; }
+    .title-logo span { color: #22d3ee; }
     
-    /* Hide the original tabs header (tab list), we'll recreate it in our fixed nav */
+    /* Tabs container - sticky below title */
     div[data-testid="stTabs"] > div:first-child {
-        position: fixed !important;
-        top: 8px !important;
-        left: 180px !important;
-        right: 140px !important;
-        z-index: 1001 !important;
-        background: transparent !important;
-        padding: 0 !important;
-        border: none !important;
+        position: sticky;
+        top: 60px;
+        z-index: 998;
+        background: #09090b;
+        padding: 10px 0;
+        border-bottom: 1px solid #27272a;
     }
     
-    /* Add top padding to main content */
-    .main .block-container {
-        padding-top: 60px !important;
-    }
-    
-    /* Tabs styling - compact for header */
+    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(180deg, #1a1a1d 0%, #141416 100%);
-        border-radius: 8px;
-        padding: 4px 8px;
-        gap: 4px;
+        border-radius: 10px;
+        padding: 8px 12px;
+        gap: 8px;
         border: 1px solid #2a2a2e;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -501,11 +495,13 @@ with st.sidebar:
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
 
 # ============================================
-# FIXED NAVIGATION BAR (same level as Deploy)
+# TITLE BAR (Sticky at top)
 # ============================================
 st.markdown("""
-<div class="fixed-nav">
-    <div class="nav-title">🎬 Cine<span>Metrics</span></div>
+<div class="title-bar">
+    <div class="title-content">
+        <div class="title-logo">🎬 Cine<span>Metrics</span></div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
