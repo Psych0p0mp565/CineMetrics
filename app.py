@@ -739,6 +739,18 @@ st.markdown("""
     <div class="shape"></div>
     <div class="shape"></div>
 </div>
+<script>
+    // Ensure scrolling is enabled
+    (function() {
+        document.documentElement.style.overflowY = 'auto';
+        document.body.style.overflowY = 'auto';
+        var appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
+        if (appContainer) {
+            appContainer.style.overflowY = 'auto';
+            appContainer.style.height = 'auto';
+        }
+    })();
+</script>
 """, unsafe_allow_html=True)
 
 # ============================================
