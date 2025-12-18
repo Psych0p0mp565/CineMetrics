@@ -150,43 +150,107 @@ st.markdown("""
         border-bottom: 1px solid #27272a;
     }
     
-    /* Title bar - sticky at top */
-    .title-bar {
-        position: sticky;
+    /* Loading Screen */
+    .loading-screen {
+        position: fixed;
         top: 0;
-        z-index: 999;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeOut 0.5s ease-out 1.5s forwards;
+    }
+    
+    @keyframes fadeOut {
+        to { opacity: 0; visibility: hidden; }
+    }
+    
+    .loading-logo {
+        font-size: 4rem;
+        font-weight: 700;
+        color: #fafafa;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    .loading-logo span { color: #22d3ee; }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #27272a;
+        border-top: 4px solid #22d3ee;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Title bar - fixed at top */
+    .title-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
         background: linear-gradient(180deg, #09090b 0%, #0d0d0f 100%);
-        padding: 12px 0;
-        margin-bottom: 10px;
+        padding: 20px 0;
         border-bottom: 1px solid #27272a;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     
     .title-content {
         display: flex;
         align-items: center;
-        gap: 15px;
+        justify-content: center;
+        text-align: center;
     }
     
     .title-logo {
-        font-size: 1.5rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: #fafafa;
-        letter-spacing: -0.5px;
+        letter-spacing: -1px;
+        text-align: center;
     }
     
     .title-logo span { color: #22d3ee; }
     
-    /* Tabs container - sticky below title */
+    /* Tabs container - fixed below title */
     div[data-testid="stTabs"] > div:first-child {
-        position: sticky;
-        top: 60px;
-        z-index: 998;
+        position: fixed !important;
+        top: 80px !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999 !important;
         background: #09090b;
-        padding: 10px 0;
+        padding: 12px 0;
         border-bottom: 1px solid #27272a;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
     }
     
-    /* Tabs styling */
+    /* Add padding to main content to account for fixed header */
+    .main .block-container {
+        padding-top: 140px !important;
+    }
+    
+    /* Tabs styling - centered */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(180deg, #1a1a1d 0%, #141416 100%);
         border-radius: 10px;
@@ -194,6 +258,7 @@ st.markdown("""
         gap: 8px;
         border: 1px solid #2a2a2e;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        margin: 0 auto;
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -495,7 +560,23 @@ with st.sidebar:
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
 
 # ============================================
-# TITLE BAR (Sticky at top)
+# LOADING SCREEN
+# ============================================
+st.markdown("""
+<div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">🎬 Cine<span>Metrics</span></div>
+    <div class="loading-spinner"></div>
+</div>
+<script>
+    setTimeout(function() {
+        var loader = document.getElementById('loadingScreen');
+        if (loader) loader.style.display = 'none';
+    }, 2000);
+</script>
+""", unsafe_allow_html=True)
+
+# ============================================
+# TITLE BAR (Fixed at top)
 # ============================================
 st.markdown("""
 <div class="title-bar">
