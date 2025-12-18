@@ -976,7 +976,18 @@ with st.sidebar:
     
     # Year Range
     years = sorted(df['year'].dropna().unique())
-    year_range = st.slider("📅 Year Range", int(min(years)), int(max(years)), (2000, int(max(years))))
+    if len(years) == 0:
+        # Fallback if no valid years found
+        years = [2000, 2015]
+        st.warning("⚠️ No valid years found in dataset. Using default range.")
+    
+    min_year = int(min(years))
+    max_year = int(max(years))
+    # Ensure default range is within valid years
+    default_min = max(min_year, 2000) if min_year < 2000 else min_year
+    default_max = max_year
+    
+    year_range = st.slider("📅 Year Range", min_year, max_year, (default_min, default_max))
     
     st.markdown("---")
     
