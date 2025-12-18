@@ -522,12 +522,17 @@ tab1, tab6, tab3, tab2, tab4, tab_concepts = st.tabs([
 with tab1:
     # Stats Row
     col1, col2, col3, col4, col5 = st.columns(5)
+    
+    # Handle empty dataframe - use defaults for mean calculations
+    avg_rating = filtered_df['vote_average'].mean() if len(filtered_df) > 0 else 0
+    success_rate = filtered_df['is_profitable'].mean() * 100 if len(filtered_df) > 0 else 0
+    
     stats = [
         ("🎬", f"{len(filtered_df):,}", "Movies"),
         ("💰", f"${filtered_df['revenue'].sum()/1e9:.1f}B", "Revenue"),
         ("📈", f"${filtered_df['profit'].sum()/1e9:.1f}B", "Profit"),
-        ("⭐", f"{filtered_df['vote_average'].mean():.1f}", "Avg Rating"),
-        ("✅", f"{filtered_df['is_profitable'].mean()*100:.0f}%", "Success")
+        ("⭐", f"{avg_rating:.1f}", "Avg Rating"),
+        ("✅", f"{success_rate:.0f}%", "Success")
     ]
 
     for col, (icon, val, label) in zip([col1,col2,col3,col4,col5], stats):
@@ -825,15 +830,15 @@ with tab4:
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
 
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
     
-with col1:
+    with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
                         color_continuous_scale='Teal', title="Market Share (size = revenue, color = rating)")
         style_chart(fig, 400)
         st.plotly_chart(fig, use_container_width=True)
     
-with col2:
+    with col2:
         top_g = genre_stats.nlargest(8, 'Count')
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
@@ -1001,8 +1006,9 @@ with tab6:
                 st.metric("Budget", f"${row['budget']/1e6:.0f}M")
             with col3:
                 st.metric("Rating", f"{row['vote_average']:.1f}")
-                profit_color = "normal" if row['profit'] >= 0 else "inverse"
-                st.metric("Profit", f"${row['profit']/1e6:.0f}M")
+                profit_delta = "Profitable" if row['profit'] >= 0 else "Loss"
+                delta_color = "normal" if row['profit'] >= 0 else "inverse"
+                st.metric("Profit", f"${row['profit']/1e6:.0f}M", delta=profit_delta, delta_color=delta_color)
     
     st.markdown("---")
     st.dataframe(results[['original_title','year','primary_genre','director','budget','revenue','profit','vote_average']].head(100), use_container_width=True, height=400)
