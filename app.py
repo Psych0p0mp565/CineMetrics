@@ -24,20 +24,131 @@ st.markdown("""
     
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     
-    /* Animated Background */
+    /* Live Animated Background */
     .stApp {
+        background: linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: 
-            radial-gradient(ellipse at 0% 100%, rgba(34, 211, 238, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 100% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 70%),
-            linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
-        background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
-        animation: gradientShift 15s ease-in-out infinite;
+            radial-gradient(ellipse at 0% 100%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+        background-size: 200% 200%, 200% 200%, 100% 100%;
+        animation: gradientShift 20s ease-in-out infinite;
+        z-index: 0;
+        pointer-events: none;
     }
     
     @keyframes gradientShift {
-        0%, 100% { background-position: 0% 100%, 100% 0%, 50% 50%, 0% 0%; }
-        50% { background-position: 100% 0%, 0% 100%, 50% 50%, 0% 0%; }
+        0%, 100% { background-position: 0% 100%, 100% 0%, 50% 50%; }
+        50% { background-position: 100% 0%, 0% 100%, 50% 50%; }
+    }
+    
+    /* Animated Particles */
+    .stApp::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(2px 2px at 20% 30%, rgba(34, 211, 238, 0.3), transparent),
+            radial-gradient(2px 2px at 60% 70%, rgba(245, 158, 11, 0.3), transparent),
+            radial-gradient(1px 1px at 50% 50%, rgba(34, 211, 238, 0.4), transparent),
+            radial-gradient(1px 1px at 80% 10%, rgba(245, 158, 11, 0.3), transparent),
+            radial-gradient(2px 2px at 90% 50%, rgba(34, 211, 238, 0.2), transparent),
+            radial-gradient(1px 1px at 33% 60%, rgba(245, 158, 11, 0.3), transparent),
+            radial-gradient(1px 1px at 70% 80%, rgba(34, 211, 238, 0.2), transparent),
+            radial-gradient(2px 2px at 40% 90%, rgba(245, 158, 11, 0.3), transparent);
+        background-size: 200% 200%;
+        animation: particleMove 25s linear infinite;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    @keyframes particleMove {
+        0% { background-position: 0% 0%, 100% 100%, 50% 50%, 80% 20%, 20% 80%, 60% 40%, 40% 60%, 90% 10%; }
+        100% { background-position: 100% 100%, 0% 0%, 50% 50%, 20% 80%, 80% 20%, 40% 60%, 60% 40%, 10% 90%; }
+    }
+    
+    /* Floating Shapes */
+    .floating-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .shape {
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.1;
+        animation: float 20s infinite ease-in-out;
+    }
+    
+    .shape:nth-child(1) {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(34, 211, 238, 0.3), transparent);
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+    
+    .shape:nth-child(2) {
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.3), transparent);
+        top: 60%;
+        right: 10%;
+        animation-delay: 5s;
+    }
+    
+    .shape:nth-child(3) {
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(34, 211, 238, 0.2), transparent);
+        bottom: 20%;
+        left: 50%;
+        animation-delay: 10s;
+    }
+    
+    .shape:nth-child(4) {
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.2), transparent);
+        top: 30%;
+        right: 30%;
+        animation-delay: 15s;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25% { transform: translate(50px, -50px) scale(1.1); }
+        50% { transform: translate(-30px, 30px) scale(0.9); }
+        75% { transform: translate(30px, 50px) scale(1.05); }
+    }
+    
+    /* Ensure content is above background */
+    .main .block-container,
+    section[data-testid="stSidebar"],
+    header[data-testid="stHeader"] {
+        position: relative;
+        z-index: 1;
     }
     
     /* Header */
@@ -573,6 +684,18 @@ st.markdown("""
         if (loader) loader.style.display = 'none';
     }, 2000);
 </script>
+""", unsafe_allow_html=True)
+
+# ============================================
+# FLOATING SHAPES (Live Background)
+# ============================================
+st.markdown("""
+<div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+</div>
 """, unsafe_allow_html=True)
 
 # ============================================
