@@ -28,7 +28,6 @@ st.markdown("""
     .stApp {
         background: linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
         position: relative;
-        overflow: hidden;
     }
     
     .stApp::before {
@@ -143,12 +142,24 @@ st.markdown("""
         75% { transform: translate(30px, 50px) scale(1.05); }
     }
     
-    /* Ensure content is above background */
+    /* Ensure content is above background and scrollable */
     .main .block-container,
     section[data-testid="stSidebar"],
     header[data-testid="stHeader"] {
         position: relative;
         z-index: 1;
+    }
+    
+    /* Ensure main content area can scroll */
+    .main {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Ensure body can scroll */
+    body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
     }
     
     /* Header */
