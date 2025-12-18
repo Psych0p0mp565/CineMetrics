@@ -86,8 +86,8 @@ st.markdown("""
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
-        overflow: hidden;
+        height: 100vh;
+        overflow: visible;
         z-index: 0;
         pointer-events: none;
     }
@@ -150,16 +150,48 @@ st.markdown("""
         z-index: 1;
     }
     
-    /* Ensure main content area can scroll */
-    .main {
-        overflow-y: auto !important;
+    /* Ensure scrolling works - fix all containers */
+    html {
+        overflow-y: scroll !important;
         overflow-x: hidden !important;
     }
     
-    /* Ensure body can scroll */
     body {
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        height: auto !important;
+        min-height: 100vh !important;
+    }
+    
+    #root {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+    }
+    
+    /* Fix for Streamlit's main container */
+    [data-testid="stAppViewContainer"] {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+    }
+    
+    .main {
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+    }
+    
+    /* Ensure fixed elements don't block scrolling */
+    .title-bar,
+    div[data-testid="stTabs"] > div:first-child {
+        pointer-events: auto;
+    }
+    
+    /* Ensure content can scroll past fixed header */
+    section[data-testid="stSidebar"] {
+        position: relative !important;
+        z-index: 1;
     }
     
     /* Header */
