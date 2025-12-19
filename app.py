@@ -15,14 +15,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# UX toggles (UI only)
+if "perf_mode" not in st.session_state:
+    st.session_state["perf_mode"] = True
+if "focus_mode" not in st.session_state:
+    st.session_state["focus_mode"] = False
+
 # ============================================
 # MODERN STYLING
 # ============================================
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-    
-    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    /* Use a fast system font stack (no external font requests) */
+    * { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; }
     
     /* Live Animated Background */
     .stApp {
@@ -150,7 +155,7 @@ st.markdown("""
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewContainer"] > div {
         position: relative;
-        z-index: 10 !important;
+        z-index: 2 !important;
     }
     
     /* Ensure all Streamlit elements are above background */
@@ -166,7 +171,14 @@ st.markdown("""
     .stTextInput,
     .stCheckbox {
         position: relative;
-        z-index: 10 !important;
+        z-index: 2 !important;
+    }
+    
+    /* Plotly: keep hover/tooltips reliable (avoid transforms/pointer-event hacks) */
+    .stPlotlyChart,
+    .js-plotly-plot {
+        position: relative !important;
+        overflow: visible !important; /* let hover tooltips escape the container */
     }
     
     /* Ensure scrolling works properly */
@@ -186,9 +198,10 @@ st.markdown("""
         overflow: visible !important;
     }
     
-    /* Streamlit view container */
+    /* Streamlit view container: avoid clipping Plotly hover/tooltips */
     [data-testid="stAppViewContainer"] {
         overflow: visible !important;
+        height: auto !important;
     }
     
     /* Ensure fixed elements don't block */
@@ -197,9 +210,28 @@ st.markdown("""
         pointer-events: auto;
     }
     
+    /* Sidebar: keep visible and make ONLY the sidebar content scroll */
     section[data-testid="stSidebar"] {
-        position: relative !important;
-        z-index: 1;
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        z-index: 50 !important;
+    }
+
+    /* Primary sidebar scroll container (Streamlit) */
+    div[data-testid="stSidebarContent"] {
+        height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-bottom: 24px;
+    }
+
+    /* Fallback for older Streamlit DOM */
+    section[data-testid="stSidebar"] > div {
+        height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-bottom: 24px;
     }
     
     /* Header */
@@ -257,6 +289,12 @@ st.markdown("""
         box-shadow: 0 20px 40px rgba(34, 211, 238, 0.15), 0 8px 16px rgba(0,0,0,0.2);
     }
     
+    /* Prevent hover effects from interfering with Plotly charts */
+    .stat-card:hover .stPlotlyChart,
+    .stat-card:hover .js-plotly-plot {
+        transform: none !important;
+    }
+    
     .stat-icon { 
         font-size: 2.5rem; 
         margin-bottom: 12px; 
@@ -285,28 +323,41 @@ st.markdown("""
         font-weight: 500;
     }
     
-    /* Section Title - Enhanced */
+    /* Section Title - Modern/Unique */
     .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
+        font-size: 1.55rem;
+        font-weight: 800;
         color: #fafafa;
-        margin: 40px 0 24px 0;
-        padding-bottom: 16px;
-        border-bottom: 3px solid transparent;
-        border-image: linear-gradient(90deg, #22d3ee, #f59e0b) 1;
+        margin: 30px 0 18px 0;
+        padding-bottom: 12px;
+        letter-spacing: -0.6px;
         display: inline-block;
         position: relative;
-        letter-spacing: -0.5px;
+        border-bottom: none;
+    }
+    
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 120px;
+        height: 3px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #22d3ee, #f59e0b);
+        opacity: 0.95;
     }
     
     .section-title::after {
         content: '';
         position: absolute;
-        bottom: -3px;
         left: 0;
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(90deg, #22d3ee, transparent);
+        bottom: -10px;
+        width: 240px;
+        height: 16px;
+        background: radial-gradient(closest-side, rgba(34,211,238,0.25), transparent);
+        filter: blur(8px);
+        pointer-events: none;
     }
     
     /* Info Card - Enhanced */
@@ -544,6 +595,139 @@ st.markdown("""
     
     .title-logo span { color: #22d3ee; }
     
+    /* Section anchor offset to account for sticky header/tabs */
+    .section-anchor {
+        position: relative;
+        top: -120px;
+        visibility: hidden;
+    }
+
+    /* Hero header */
+    .hero-wrap {
+        margin: 10px 0 24px 0;
+        padding: 22px 24px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(39,39,42,0.7), rgba(24,24,27,0.7));
+        border: 1px solid rgba(255,255,255,0.06);
+        box-shadow: 0 15px 45px rgba(0,0,0,0.35);
+        backdrop-filter: blur(10px);
+    }
+    .hero-grid {
+        display: grid;
+        grid-template-columns: 2fr 1.1fr;
+        gap: 18px;
+        align-items: center;
+    }
+    .hero-eyebrow {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #a1a1aa;
+        margin-bottom: 6px;
+    }
+    .hero-title-text {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #fafafa;
+        letter-spacing: -1px;
+        margin-bottom: 8px;
+    }
+    .hero-sub {
+        color: #d4d4d8;
+        max-width: 720px;
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+    .pill-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    .pill-nav a {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid #2a2a2e;
+        background: rgba(255,255,255,0.04);
+        color: #e5e5e5;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .pill-nav a:hover {
+        border-color: #22d3ee;
+        color: #22d3ee;
+        transform: translateY(-1px);
+    }
+
+    /* Make expanders feel like modern accordions */
+    [data-testid="stExpander"] {
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        background: rgba(24,24,27,0.55) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+        overflow: hidden;
+    }
+    [data-testid="stExpander"] summary {
+        padding: 14px 14px !important;
+        font-weight: 700 !important;
+        color: #e5e7eb !important;
+    }
+    [data-testid="stExpander"] summary:hover {
+        background: rgba(255,255,255,0.03) !important;
+    }
+    .hero-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    .hero-chip {
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(245, 158, 11, 0.08));
+        border: 1px solid rgba(255,255,255,0.06);
+        color: #fafafa;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .hero-chip .label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #a1a1aa;
+    }
+    .hero-chip .value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fafafa;
+        margin-top: 4px;
+    }
+    .hero-chip .sub {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        margin-top: 2px;
+    }
+
+    /* Two-lane content grid + glass cards */
+    .lane-grid {
+        display: grid;
+        grid-template-columns: 2fr 1.1fr;
+        gap: 18px;
+        align-items: start;
+    }
+    .glass-slab {
+        background: rgba(24,24,27,0.65);
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        backdrop-filter: blur(8px);
+    }
+    .glass-slab.tight {
+        padding: 14px;
+    }
+
     /* Tabs container - sticky below title */
     div[data-testid="stTabs"] > div:first-child {
         position: sticky !important;
@@ -661,6 +845,16 @@ st.markdown("""
         background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
         border-right: 1px solid #27272a;
         box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        height: 100vh;
+        overflow: hidden; /* prevent page scroll from clipping the sidebar */
+    }
+
+    /* Make the sidebar its own scroll container */
+    section[data-testid="stSidebar"] > div {
+        height: 100vh;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-bottom: 24px; /* space so last controls aren't cut off */
     }
     
     /* Streamlit Widget Styling - Enhanced */
@@ -694,6 +888,18 @@ st.markdown("""
     .stSlider > div > div > div > div {
         background: #22d3ee !important;
         box-shadow: 0 2px 8px rgba(34, 211, 238, 0.4) !important;
+    }
+
+    /* Sidebar slider: ensure bottom year labels are not clipped */
+    section[data-testid="stSidebar"] [data-testid="stExpander"] div[role="region"],
+    section[data-testid="stSidebar"] [data-baseweb="slider"],
+    section[data-testid="stSidebar"] [data-baseweb="slider"] * {
+        overflow: visible !important;
+    }
+
+    section[data-testid="stSidebar"] .stSlider {
+        padding-bottom: 14px !important; /* gives space for the lower labels */
+        margin-bottom: 6px !important;
     }
     
     /* Buttons */
@@ -766,7 +972,9 @@ st.markdown("""
     .main .block-container {
         padding-left: 2rem;
         padding-right: 2rem;
-        max-width: 100%;
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     /* Ensure proper alignment */
@@ -775,10 +983,7 @@ st.markdown("""
         max-width: 100%;
     }
     
-    /* Fix column alignment */
-    [data-testid="column"] {
-        width: 100% !important;
-    }
+    /* Let Streamlit manage column widths (better responsiveness) */
     
     /* Improved scrollbar */
     ::-webkit-scrollbar {
@@ -799,11 +1004,55 @@ st.markdown("""
         background: linear-gradient(180deg, #06b6d4, #0e7490);
     }
     
-    /* Smooth transitions for all interactive elements */
-    * {
-        transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    /* Smooth transitions for UI components (avoid affecting charts) */
+    .stat-card,
+    .info-card,
+    .movie-item,
+    .concept-box,
+    .stTabs [data-baseweb="tab"],
+    .stButton > button,
+    [data-baseweb="select"],
+    .stTextInput input {
+        transition-property: background-color, border-color, color, opacity, box-shadow, transform;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 150ms;
+    }
+    
+    /* Exclude Plotly charts and their containers from transitions */
+    .js-plotly-plot,
+    .plotly,
+    .modebar,
+    .modebar-container,
+    [data-testid="stPlotlyChart"],
+    .stPlotlyChart,
+    .plotly-container {
+        transition: none !important;
+    }
+
+    /* Streamlit Plotly wrapper: allow hover + tooltip overflow (do NOT force pointer-events) */
+    [data-testid="stPlotlyChart"] {
+        position: relative !important;
+        overflow: visible !important;
+        background: rgba(24, 24, 27, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 10px 12px 6px 12px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+    }
+
+    [data-testid="stPlotlyChart"] > div {
+        overflow: visible !important;
+    }
+
+    /* Hover labels above other UI */
+    .js-plotly-plot .hoverlayer {
+        z-index: 99999 !important;
+        pointer-events: none !important;
+    }
+
+    /* Keep modebar visible (don’t hide it via CSS; hiding can break interactions on some setups) */
+    .js-plotly-plot .modebar {
+        opacity: 1 !important;
     }
     
     /* Focus states for accessibility */
@@ -814,16 +1063,7 @@ st.markdown("""
         outline-offset: 2px;
     }
     
-    /* Divider */
-    .divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #f59e0b, transparent);
-        margin: 30px 0;
-    }
-    
-    /* Metric */
-    [data-testid="stMetricValue"] { font-weight: 700 !important; color: #22d3ee !important; }
-    [data-testid="stMetricLabel"] { color: #a1a1aa !important; }
+    /* Divider + Metric styling already defined above; avoid duplicate/conflicting rules */
     
     /* Cinema Spotlight Cards */
     .spotlight-container {
@@ -944,7 +1184,7 @@ st.markdown("""
         font-weight: 500;
     }
     
-    #MainMenu, footer, .stDeployButton { display: none; }
+    #MainMenu, footer { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -967,20 +1207,89 @@ def load_data():
 df = load_data()
 
 # Chart styling
+FONT_FAMILY = 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif'
+
+# Plotly config to ensure hover works
+PLOTLY_CONFIG = {
+    # Use hover modebar so it doesn't clutter the UI
+    'displayModeBar': 'hover',
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+    'scrollZoom': False,
+    'responsive': True,
+    # Safety: ensure plots are not rendered static
+    'staticPlot': False,
+}
+
+def render_chart(fig):
+    """Render a Plotly chart with proper config for hover tooltips."""
+    st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
+
 def style_chart(fig, height=400):
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(39,39,42,0.5)',
-        font=dict(family='Plus Jakarta Sans', color='#a1a1aa', size=11),
-        title_font=dict(family='Plus Jakarta Sans', color='#fafafa', size=14, weight=600),
+        font=dict(family=FONT_FAMILY, color='#a1a1aa', size=11),
+        title_font=dict(family=FONT_FAMILY, color='#fafafa', size=14, weight=600),
         xaxis=dict(gridcolor='rgba(63,63,70,0.5)', linecolor='#3f3f46'),
         yaxis=dict(gridcolor='rgba(63,63,70,0.5)', linecolor='#3f3f46'),
         height=height,
         margin=dict(l=20, r=20, t=50, b=40),
-        hoverlabel=dict(bgcolor='#27272a', font_size=12),
+        hovermode="closest",
+        hoverlabel=dict(
+            bgcolor='#1f1f23',
+            bordercolor='#22d3ee',
+            font=dict(size=12, family=FONT_FAMILY, color='#fafafa'),
+        ),
         legend=dict(bgcolor='rgba(0,0,0,0)')
     )
     return fig
+
+def explain_chart(title: str, points: list[str], expanded: bool = False) -> None:
+    """UI helper: Add a compact, per-chart explanation without changing any data logic."""
+    if st.session_state.get("focus_mode", False):
+        return
+    if not points:
+        return
+    # Explain mode: opened by default (can be toggled in the sidebar)
+    default_open = bool(st.session_state.get("explain_mode", True))
+    with st.expander(f"ℹ️ How to read: {title}", expanded=(default_open if expanded is False else expanded)):
+        st.markdown("\n".join([f"- {p}" for p in points]))
+
+def add_movie_hover(fig, data_df: pd.DataFrame) -> None:
+    """UI helper: standardize hover tooltips to show title + description (overview) for movie-level charts."""
+    if data_df is None or len(data_df) == 0:
+        return
+    idx = data_df.index
+    title = data_df['original_title'] if 'original_title' in data_df.columns else pd.Series(["Unknown"] * len(idx), index=idx)
+    overview = data_df['overview'] if 'overview' in data_df.columns else pd.Series([""] * len(idx), index=idx)
+    year = data_df['year'] if 'year' in data_df.columns else pd.Series([""] * len(idx), index=idx)
+    genre = data_df['primary_genre'] if 'primary_genre' in data_df.columns else pd.Series([""] * len(idx), index=idx)
+    director = data_df['director'] if 'director' in data_df.columns else pd.Series([""] * len(idx), index=idx)
+
+    custom = pd.DataFrame(
+        {
+            "title": title.fillna("Unknown"),
+            "overview": overview.fillna("No description available."),
+            "year": year.fillna(""),
+            "primary_genre": genre.fillna(""),
+            "director": director.fillna(""),
+        },
+        index=idx,
+    )
+
+    fig.update_traces(
+        hovertext=custom["title"].tolist(),
+        customdata=custom[["overview", "year", "primary_genre", "director"]].to_numpy(),
+        hovertemplate=(
+            "<b>%{hovertext}</b>"
+            "<br>Year: %{customdata[1]}"
+            "<br>Genre: %{customdata[2]}"
+            "<br>Director: %{customdata[3]}"
+            "<br><br>%{customdata[0]}"
+            "<extra></extra>"
+        ),
+    )
 
 # Color Blind Friendly Palette (Blue/Orange instead of Red/Green)
 COLORS = ['#22d3ee', '#06b6d4', '#0891b2', '#f59e0b', '#d97706']
@@ -991,46 +1300,52 @@ DIVERGING = [[0, '#7c3aed'], [0.5, '#52525b'], [1, '#f59e0b']]  # Purple to Oran
 # ============================================
 with st.sidebar:
     st.markdown("## 🎛️ Filters")
+    st.caption("Refine the dataset across all tabs. Your selections update charts instantly.")
     st.markdown("---")
     
-    # Year Range
-    years = sorted(df['year'].dropna().unique())
-    if len(years) == 0:
-        # Fallback if no valid years found
-        years = [2000, 2015]
-        st.warning("⚠️ No valid years found in dataset. Using default range.")
+    # Time
+    with st.expander("🗓️ Time Window", expanded=True):
+        years = sorted(df['year'].dropna().unique())
+        if len(years) == 0:
+            # Fallback if no valid years found
+            years = [2000, 2015]
+            st.warning("⚠️ No valid years found in dataset. Using default range.")
+        
+        min_year = int(min(years))
+        max_year = int(max(years))
+        # Ensure default range is within valid years
+        default_min = max(min_year, 2000) if min_year < 2000 else min_year
+        default_max = max_year
+        
+        year_range = st.slider("Year range", min_year, max_year, (default_min, default_max))
     
-    min_year = int(min(years))
-    max_year = int(max(years))
-    # Ensure default range is within valid years
-    default_min = max(min_year, 2000) if min_year < 2000 else min_year
-    default_max = max_year
+    # Genres
+    with st.expander("🎭 Genres", expanded=True):
+        all_genres = sorted(df['primary_genre'].unique())
+        selected_genres = st.multiselect("Included genres", all_genres, placeholder="All genres")
     
-    year_range = st.slider("📅 Year Range", min_year, max_year, (default_min, default_max))
-    
-    st.markdown("---")
-    
-    # Genre Multi-select
-    all_genres = sorted(df['primary_genre'].unique())
-    selected_genres = st.multiselect("🎭 Genres", all_genres)
-    
-    st.markdown("---")
+    # Ratings
+    with st.expander("⭐ Ratings", expanded=False):
+        min_rating = st.slider("Minimum rating", 0.0, 10.0, 0.0, 0.5)
+        st.caption("Tip: Raise this to focus on higher-quality films.")
     
     # Budget
-    budget_range = st.slider("💰 Budget ($M)", 0, 300, (0, 300))
-    
-    st.markdown("---")
-    
-    # Rating
-    min_rating = st.slider("⭐ Min Rating", 0.0, 10.0, 0.0, 0.5)
-    
-    st.markdown("---")
+    with st.expander("💰 Budget", expanded=False):
+        budget_range = st.slider("Budget range ($M)", 0, 300, (0, 300))
+        st.caption("Tip: Narrow the range to reduce outliers in scatter charts.")
     
     # Quick Filters
-    st.markdown("### ⚡ Quick Filters")
-    only_profitable = st.checkbox("✅ Profitable Only")
-    only_blockbusters = st.checkbox("🎬 Blockbusters (>$500M)")
-    hidden_gems = st.checkbox("💎 Hidden Gems (Low budget, High rating)")
+    with st.expander("⚡ Quick Filters", expanded=True):
+        only_profitable = st.checkbox("✅ Profitable only")
+        only_blockbusters = st.checkbox("🎬 Blockbusters (>$500M)")
+        hidden_gems = st.checkbox("💎 Hidden gems (low budget, high rating)")
+
+    st.markdown("---")
+    st.checkbox("⚡ Performance mode (reduce lag)", key="perf_mode", value=True)
+    st.checkbox("🎯 Focus mode (hide explainers)", key="focus_mode", value=False)
+    st.checkbox("ℹ️ Explain mode (show chart explanations)", key="explain_mode", value=True)
+    if st.session_state.get("focus_mode"):
+        st.session_state["explain_mode"] = False
 
 # Apply Filters
 mask = (
@@ -1053,27 +1368,11 @@ filtered_df = df[mask]
 # Sidebar Stats
 with st.sidebar:
     st.markdown("---")
-    st.markdown("### 📊 Selection")
+    st.markdown("### 📊 Selection Summary")
     st.metric("Movies", f"{len(filtered_df):,}")
     if len(filtered_df) > 0:
         st.metric("Total Revenue", f"${filtered_df['revenue'].sum()/1e9:.1f}B")
         st.metric("Success Rate", f"{filtered_df['is_profitable'].mean()*100:.0f}%")
-
-# ============================================
-# LOADING SCREEN
-# ============================================
-st.markdown("""
-<div class="loading-screen" id="loadingScreen">
-    <div class="loading-logo">🎬 Cine<span>Metrics</span></div>
-    <div class="loading-spinner"></div>
-</div>
-<script>
-    setTimeout(function() {
-        var loader = document.getElementById('loadingScreen');
-        if (loader) loader.style.display = 'none';
-    }, 2000);
-</script>
-""", unsafe_allow_html=True)
 
 # ============================================
 # FLOATING SHAPES (Live Background)
@@ -1085,32 +1384,39 @@ st.markdown("""
     <div class="shape"></div>
     <div class="shape"></div>
 </div>
-<script>
-    // Ensure scrolling is enabled and alignment is correct
-    (function() {
-        // Enable scrolling
-        document.documentElement.style.overflowY = 'auto';
-        document.body.style.overflowY = 'auto';
-        document.documentElement.style.overflowX = 'hidden';
-        document.body.style.overflowX = 'hidden';
-        
-        // Fix app container
-        var appContainer = document.querySelector('[data-testid="stAppViewContainer"]');
-        if (appContainer) {
-            appContainer.style.overflowY = 'auto';
-            appContainer.style.overflowX = 'hidden';
-            appContainer.style.height = 'auto';
-        }
-        
-        // Ensure main content is properly aligned
-        var mainContainer = document.querySelector('.main .block-container');
-        if (mainContainer) {
-            mainContainer.style.maxWidth = '100%';
-            mainContainer.style.width = '100%';
-        }
-    })();
-</script>
 """, unsafe_allow_html=True)
+
+# Performance mode: disable expensive background animations (UI only)
+if st.session_state.get("perf_mode", True):
+    st.markdown(
+        """
+        <style>
+        .stApp::after { display: none !important; } /* particle layer */
+        .stApp::before { animation: none !important; } /* gradient shift */
+        .shape { animation: none !important; } /* floating blobs */
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+if st.session_state.get("focus_mode", False):
+    st.markdown(
+        """
+        <style>
+        .glass-slab { 
+            background: rgba(12,12,14,0.92) !important; 
+            border-color: #1f1f23 !important;
+            box-shadow: none !important;
+        }
+        .hero-wrap {
+            box-shadow: none !important;
+            background: rgba(12,12,14,0.95) !important;
+        }
+        .section-title { margin-top: 16px !important; margin-bottom: 10px !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # ============================================
 # TITLE BAR (Fixed at top)
@@ -1134,6 +1440,57 @@ tab1, tab6, tab3, tab2, tab4, tab_concepts = st.tabs([
 # TAB 1: DASHBOARD
 # ============================================
 with tab1:
+    st.markdown('<div id="overview" class="section-anchor"></div>', unsafe_allow_html=True)
+
+    hero_movies = len(filtered_df)
+    hero_revenue = filtered_df['revenue'].sum()/1e9 if len(filtered_df) > 0 else 0
+    hero_rating = filtered_df['vote_average'].mean() if len(filtered_df) > 0 else 0
+    hero_profit_rate = (filtered_df['is_profitable'].mean()*100) if len(filtered_df) > 0 else 0
+
+    st.markdown(f"""
+    <div class="hero-wrap">
+        <div class="hero-grid">
+            <div>
+                <div class="hero-eyebrow">CineMetrics Dashboard</div>
+                <div class="hero-title-text">Movie Intelligence Hub</div>
+                <div class="hero-sub">A streamlined, two-lane layout with quick anchors. Use the pills to jump to key sections or enable Focus mode in the sidebar to hide explainers.</div>
+                <div class="pill-nav">
+                    <a href="#overview">Overview</a>
+                    <a href="#analytics">Analytics</a>
+                    <a href="#interactive">Interactive</a>
+                    <a href="#financial">Financial</a>
+                    <a href="#genres">Genres</a>
+                    <a href="#explorer">Explorer</a>
+                </div>
+            </div>
+            <div class="hero-metrics">
+                <div class="hero-chip">
+                    <div class="label">Selected Movies</div>
+                    <div class="value">{hero_movies:,}</div>
+                    <div class="sub">Filtered dataset</div>
+                </div>
+                <div class="hero-chip">
+                    <div class="label">Revenue</div>
+                    <div class="value">${hero_revenue:.1f}B</div>
+                    <div class="sub">Total box office</div>
+                </div>
+                <div class="hero-chip">
+                    <div class="label">Avg Rating</div>
+                    <div class="value">{hero_rating:.1f}</div>
+                    <div class="sub">Across selection</div>
+                </div>
+                <div class="hero-chip">
+                    <div class="label">Success</div>
+                    <div class="value">{hero_profit_rate:.0f}%</div>
+                    <div class="sub">Profitable share</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="glass-slab">', unsafe_allow_html=True)
+
     # Stats Row
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -1180,20 +1537,21 @@ with tab1:
     genre_data = genre_data.nlargest(5, 'revenue')
 
     # Display genre cards using Streamlit columns
-    genre_cols = st.columns(5)
+    if len(genre_data) > 0:
+        genre_cols = st.columns(5)
 
-    # Calculate max revenue for percentage bar
-    max_rev = genre_data['revenue'].max()
+        # Calculate max revenue for percentage bar
+        max_rev = genre_data['revenue'].max() if len(genre_data) > 0 else 1
 
-    for i, (_, row) in enumerate(genre_data.iterrows()):
-        genre = row['primary_genre']
-        movie_count = int(row['original_title'])
-        revenue = row['revenue'] / 1e9
-        rating = row['vote_average']
-        rev_percent = (row['revenue'] / max_rev) * 100
-        
-        with genre_cols[i]:
-            st.markdown(f"""
+        for i, (_, row) in enumerate(genre_data.iterrows()):
+            genre = row['primary_genre']
+            movie_count = int(row['original_title'])
+            revenue = row['revenue'] / 1e9
+            rating = row['vote_average']
+            rev_percent = (row['revenue'] / max_rev) * 100 if max_rev > 0 else 0
+            
+            with genre_cols[i]:
+                st.markdown(f"""
             <div style="background: linear-gradient(180deg, #1c1c1e 0%, #141416 100%); 
                         border: 1px solid #2a2a2e; border-radius: 12px; 
                         padding: 20px 16px; text-align: left; height: 200px;
@@ -1224,6 +1582,8 @@ with tab1:
                 </div>
             </div>
             """, unsafe_allow_html=True)
+    else:
+        st.info("No genre data available with current filters.")
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">📊 Overview</div>', unsafe_allow_html=True)
@@ -1241,7 +1601,7 @@ with tab1:
                 <div class="info-desc">${top['revenue']/1e9:.2f}B • {int(top['year']) if pd.notna(top['year']) else 'N/A'}</div>
             </div>
             """, unsafe_allow_html=True)
-        
+
         with col2:
             rated = filtered_df[filtered_df['vote_count'] >= 500]
             if len(rated) > 0:
@@ -1265,16 +1625,38 @@ with tab1:
                     <div class="info-desc">{best_roi['roi']:.0f}% return • ${best_roi['budget']/1e6:.0f}M budget</div>
                 </div>
                 """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Charts Row 1
     chart_col1, chart_col2 = st.columns(2)
     
     with chart_col1:
-        genre_rev = filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(8).reset_index()
-        fig = px.pie(genre_rev, values='revenue', names='primary_genre', hole=0.5,
-                    title="Revenue by Genre", color_discrete_sequence=COLORS)
+        # De-dup: in Genre tab we already show revenue share (treemap/funnel).
+        # Here we show *volume* instead: movie count by genre.
+        # NOTE: avoid duplicate column names (Plotly/narwhals requires unique column names)
+        genre_counts = (
+            filtered_df['primary_genre']
+            .value_counts()
+            .head(8)
+            .rename_axis('primary_genre')
+            .reset_index(name='count')
+        )
+        fig = px.pie(
+            genre_counts,
+            values='count',
+            names='primary_genre',
+            hole=0.5,
+            title="Movies by Genre",
+            color_discrete_sequence=COLORS,
+        )
+        fig.update_traces(hovertemplate="<b>%{label}</b><br>Movies: %{value:,}<br>Share: %{percent}<extra></extra>")
+        explain_chart("Movies by Genre (Donut)", [
+            "Each slice is a genre; slice size = number of movies in that genre within your current filters.",
+            "Hover to see the count and share.",
+            "Use the legend to isolate a genre (click to toggle).",
+        ])
         style_chart(fig, 380)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with chart_col2:
         yearly = filtered_df.groupby('year').agg({'revenue': 'sum', 'original_title': 'count'}).reset_index()
@@ -1282,10 +1664,16 @@ with tab1:
         fig.add_trace(go.Bar(x=yearly['year'], y=yearly['original_title'], name='Movies', marker_color='#22d3ee'), secondary_y=False)
         fig.add_trace(go.Scatter(x=yearly['year'], y=yearly['revenue'], name='Revenue', line=dict(color='#f59e0b', width=3)), secondary_y=True)
         fig.update_layout(title="Movies & Revenue by Year")
+        explain_chart("Movies & Revenue by Year (Combo)", [
+            "Bars (left axis) = number of movies released per year.",
+            "Line (right axis) = total revenue per year.",
+            "Use this to spot growth/declines and how output relates to box office.",
+        ])
         style_chart(fig, 380)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Charts Row 2 - New Visualizations
+    st.markdown('<div id="analytics" class="section-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">📈 Advanced Analytics</div>', unsafe_allow_html=True)
     
     chart_col3, chart_col4 = st.columns(2)
@@ -1293,20 +1681,31 @@ with tab1:
     with chart_col3:
         # Correlation Heatmap
         numeric_cols = ['budget', 'revenue', 'profit', 'vote_average', 'popularity', 'vote_count', 'runtime']
-        corr_data = filtered_df[numeric_cols].corr()
-        fig = go.Figure(data=go.Heatmap(
-            z=corr_data.values,
-            x=corr_data.columns,
-            y=corr_data.columns,
-            colorscale='Teal',
-            text=corr_data.values.round(2),
-            texttemplate='%{text}',
-            textfont={"size": 10},
-            colorbar=dict(title="Correlation")
-        ))
-        fig.update_layout(title="📊 Correlation Heatmap", height=400)
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        if len(filtered_df) > 0 and all(col in filtered_df.columns for col in numeric_cols):
+            corr_data = filtered_df[numeric_cols].corr()
+            fig = go.Figure(data=go.Heatmap(
+                z=corr_data.values,
+                x=corr_data.columns,
+                y=corr_data.columns,
+                colorscale='Teal',
+                text=corr_data.values.round(2),
+                texttemplate='%{text}',
+                textfont={"size": 10},
+                colorbar=dict(title="Correlation")
+            ))
+            fig.update_traces(
+                hovertemplate="%{y} vs %{x}<br>Correlation: %{z:.2f}<extra></extra>"
+            )
+            fig.update_layout(title="📊 Correlation Heatmap", height=400)
+            explain_chart("Correlation Heatmap", [
+                "Shows how strongly pairs of variables move together (range -1 to +1).",
+                "Values near +1 mean strong positive relationship; near 0 means weak/no linear relationship.",
+                "Use it to validate hypotheses (e.g., budget ↔ revenue) and avoid misleading comparisons.",
+            ])
+            style_chart(fig, 400)
+            render_chart(fig)
+        else:
+            st.info("Insufficient data for correlation heatmap.")
     
     with chart_col4:
         # Box Plot - Revenue Distribution by Genre
@@ -1316,40 +1715,80 @@ with tab1:
                     title="Revenue Distribution by Genre",
                     color='primary_genre', color_discrete_sequence=COLORS)
         fig.update_yaxes(type="log")
+        explain_chart("Revenue Distribution by Genre (Box Plot)", [
+            "Each box summarizes the spread of revenues within a genre (median + quartiles).",
+            "Dots indicate outliers; the log scale helps compare blockbuster-heavy genres fairly.",
+            "Use this to compare typical performance vs. extreme hits.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Charts Row 3
     chart_col5, chart_col6 = st.columns(2)
     
     with chart_col5:
         # Month Release Heatmap
-        month_data = filtered_df.groupby(['year', 'month']).agg({
-            'revenue': 'sum',
-            'original_title': 'count'
-        }).reset_index()
-        month_pivot = month_data.pivot(index='month', columns='year', values='revenue').fillna(0)
-        fig = go.Figure(data=go.Heatmap(
-            z=month_pivot.values,
-            x=month_pivot.columns,
-            y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            colorscale='Viridis',
-            colorbar=dict(title="Revenue ($)")
-        ))
-        fig.update_layout(title="📅 Release Month Heatmap (Revenue by Month & Year)", height=400)
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        if len(filtered_df) > 0:
+            month_data = filtered_df.groupby(['year', 'month']).agg({
+                'revenue': 'sum',
+                'original_title': 'count'
+            }).reset_index()
+            if len(month_data) > 0:
+                month_pivot = month_data.pivot(index='month', columns='year', values='revenue').fillna(0)
+                fig = go.Figure(data=go.Heatmap(
+                    z=month_pivot.values,
+                    x=month_pivot.columns,
+                    y=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    colorscale='Viridis',
+                    colorbar=dict(title="Revenue ($)")
+                ))
+                fig.update_traces(
+                    hovertemplate="Year: %{x}<br>Month: %{y}<br>Revenue: $%{z:,.0f}<extra></extra>"
+                )
+                fig.update_layout(title="📅 Release Month Heatmap (Revenue by Month & Year)", height=400)
+                explain_chart("Release Month Heatmap", [
+                    "Rows = months; columns = years; color intensity = total revenue.",
+                    "Use it to spot seasonal release patterns (summer/holiday spikes).",
+                    "Hover over a cell to see exact values for a month-year combination.",
+                ])
+                style_chart(fig, 400)
+                render_chart(fig)
+            else:
+                st.info("No month data available.")
+        else:
+            st.info("No data available for month heatmap.")
     
     with chart_col6:
-        # Bubble Chart - Budget vs Revenue vs Rating
-        bubble_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(200)
-        fig = px.scatter(bubble_data, x='budget', y='revenue', size='vote_count',
-                        color='vote_average', hover_name='original_title',
-                        color_continuous_scale='Teal',
-                        title="Budget vs Revenue (Size = Votes, Color = Rating)",
-                        labels={'budget': 'Budget ($)', 'revenue': 'Revenue ($)', 'vote_average': 'Rating'})
+        # De-dup: Budget vs Revenue already appears in Financial (main version).
+        # Replace with a different, readable story: popularity vs rating.
+        bubble_data = filtered_df[(filtered_df['vote_count'] > 0) & (filtered_df['popularity'] > 0)].head(250)
+        fig = px.scatter(
+            bubble_data,
+            x='vote_average',
+            y='popularity',
+            size='vote_count',
+            color='primary_genre',
+            hover_name='original_title',
+            hover_data={
+                'year': True,
+                'primary_genre': True,
+                'director': True,
+                'vote_average': ':.1f',
+                'popularity': ':.1f',
+                'vote_count': ':,d',
+            },
+            title="Popularity vs Rating (Size = Votes)",
+            labels={'vote_average': 'Rating', 'popularity': 'Popularity'},
+            color_discrete_sequence=COLORS,
+        )
+        add_movie_hover(fig, bubble_data)
+        explain_chart("Popularity vs Rating (Bubble)", [
+            "Each dot is a movie: X = rating, Y = popularity.",
+            "Bubble size = number of votes (engagement).",
+            "Use this to find films that are well-liked (right side) vs widely-known (top) — and interesting outliers.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Charts Row 4
     chart_col7, chart_col8 = st.columns(2)
@@ -1361,8 +1800,13 @@ with tab1:
         fig = px.violin(violin_data, x='primary_genre', y='vote_average',
                        color='primary_genre', color_discrete_sequence=COLORS,
                        title="Rating Distribution by Genre (Violin Plot)")
+        explain_chart("Rating Distribution by Genre (Violin)", [
+            "Shows how ratings are distributed within each genre (width = density).",
+            "Wider sections mean many films sit around that rating range.",
+            "Use this to compare consistency: tight violins = consistent ratings, wide = varied quality.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with chart_col8:
         # Sunburst Chart - Genre Hierarchy
@@ -1375,13 +1819,19 @@ with tab1:
         fig = px.sunburst(sunburst_data, path=['primary_genre', 'decade'], values='revenue',
                          color='revenue', color_continuous_scale='Teal',
                          title="Genre & Decade Hierarchy (Sunburst)")
+        explain_chart("Genre & Decade Hierarchy (Sunburst)", [
+            "Inner ring = genre; outer ring = decades within that genre.",
+            "Segment size = revenue contribution; color intensity = revenue magnitude.",
+            "Click segments to drill down; use it to see which decades drove each genre’s earnings.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
 
 # ============================================
 # TAB 2: INTERACTIVE TOOLS
 # ============================================
 with tab2:
+    st.markdown('<div id="interactive" class="section-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🎮 Custom Chart Builder</div>', unsafe_allow_html=True)
     
     st.markdown("""
@@ -1405,8 +1855,14 @@ with tab2:
     fig = px.scatter(plot_df, x=x_var, y=y_var, color=color_var, size=size_var,
                     hover_name='original_title', hover_data=['year', 'director'],
                     title=f"{y_var.title()} vs {x_var.title()}", color_discrete_sequence=COLORS)
+    add_movie_hover(fig, plot_df)
+    explain_chart("Custom Scatter Builder", [
+        "Pick variables for X/Y to explore relationships in the dataset.",
+        "Color and size let you add extra dimensions (e.g., genre, decade, popularity).",
+        "Hover any point to see details; drag to zoom; double-click to reset.",
+    ])
     style_chart(fig, 500)
-    st.plotly_chart(fig, use_container_width=True)
+    render_chart(fig)
     
     # Movie Comparison Tool
     st.markdown('<div class="section-title">🔄 Movie Comparison</div>', unsafe_allow_html=True)
@@ -1417,7 +1873,7 @@ with tab2:
         <div class="concept-text">Select any two movies to see how they stack up against each other.</div>
     </div>
     """, unsafe_allow_html=True)
-    
+
     col1, col2 = st.columns(2)
     movie_list = filtered_df.nlargest(200, 'revenue')['original_title'].tolist() if len(filtered_df) > 0 else []
     
@@ -1440,8 +1896,13 @@ with tab2:
         fig.add_trace(go.Bar(name=movie1[:20], x=metrics, y=[m1[m] for m in metrics], marker_color='#22d3ee'))
         fig.add_trace(go.Bar(name=movie2[:20], x=metrics, y=[m2[m] for m in metrics], marker_color='#f59e0b'))
         fig.update_layout(barmode='group', title="Side-by-Side Comparison")
+        explain_chart("Movie Comparison (Grouped Bars)", [
+            "Each group is a metric; bar height compares Movie 1 vs Movie 2.",
+            "Use this to contrast financial performance (budget/revenue/profit) and reception (rating/popularity).",
+            "Tip: If scales feel uneven, focus on relative differences rather than absolute heights.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
         
         col1, col2 = st.columns(2)
         for col, name, data in [(col1, movie1, m1), (col2, movie2, m2)]:
@@ -1480,59 +1941,48 @@ with tab2:
     # Additional Interactive Visualizations
     st.markdown('<div class="section-title">📊 Advanced Interactive Charts</div>', unsafe_allow_html=True)
     
-    int_row1_col1, int_row1_col2 = st.columns(2)
-    
-    with int_row1_col1:
-        # Density Contour Plot
-        density_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(500)
-        fig = px.density_contour(density_data, x='budget', y='revenue',
-                                color='vote_average',
-                                title="Budget vs Revenue Density (Contour Plot)")
-        fig.update_traces(contours_coloring="fill", contours_showlabels=True)
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with int_row1_col2:
-        # 3D Scatter Plot
-        scatter_3d_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(200)
-        fig = px.scatter_3d(scatter_3d_data, x='budget', y='revenue', z='vote_average',
-                           color='is_profitable',
-                           color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
-                           hover_name='original_title',
-                           title="3D: Budget vs Revenue vs Rating",
-                           labels={'budget': 'Budget', 'revenue': 'Revenue', 'vote_average': 'Rating'})
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    int_row2_col1, int_row2_col2 = st.columns(2)
-    
-    with int_row2_col1:
-        # Strip Plot - Rating Distribution
-        strip_data = filtered_df[filtered_df['primary_genre'].isin(
-            filtered_df['primary_genre'].value_counts().head(6).index
-        )]
-        fig = px.strip(strip_data, x='primary_genre', y='vote_average',
-                      color='is_profitable',
-                      color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
-                      title="Rating Distribution by Genre (Strip Plot)")
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with int_row2_col2:
-        # Area Chart - Revenue Trends by Genre
-        area_data = filtered_df.groupby(['year', 'primary_genre'])['revenue'].sum().reset_index()
-        top_genres_area = area_data.groupby('primary_genre')['revenue'].sum().nlargest(5).index
-        area_filtered = area_data[area_data['primary_genre'].isin(top_genres_area)]
-        fig = px.area(area_filtered, x='year', y='revenue', color='primary_genre',
-                     title="Revenue Trends by Genre (Area Chart)",
-                     color_discrete_sequence=COLORS)
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+    # Removed (per request): Density heatmap + Strip plot (these were confusing)
+
+    # 3D Scatter Plot (full width)
+    scatter_3d_data = filtered_df[(filtered_df['budget'] > 1e6) & (filtered_df['revenue'] > 0)].head(200)
+    fig = px.scatter_3d(scatter_3d_data, x='budget', y='revenue', z='vote_average',
+                       color='is_profitable',
+                       color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
+                       hover_name='original_title',
+                       hover_data={'year': True, 'primary_genre': True, 'director': True,
+                                  'budget': ':$,.0f', 'revenue': ':$,.0f', 'profit': ':$,.0f',
+                                  'roi': ':.0f', 'vote_average': ':.1f', 'vote_count': ':,d'},
+                       title="3D: Budget vs Revenue vs Rating",
+                       labels={'budget': 'Budget', 'revenue': 'Revenue', 'vote_average': 'Rating'})
+    add_movie_hover(fig, scatter_3d_data)
+    explain_chart("3D Budget vs Revenue vs Rating", [
+        "X = budget, Y = revenue, Z = rating (3D view).",
+        "Color indicates profitability (profitable vs loss).",
+        "Drag to rotate; scroll to zoom; hover points for movie details.",
+    ])
+    style_chart(fig, 450)
+    render_chart(fig)
+
+    # Area Chart - Revenue Trends by Genre (full width)
+    area_data = filtered_df.groupby(['year', 'primary_genre'])['revenue'].sum().reset_index()
+    top_genres_area = area_data.groupby('primary_genre')['revenue'].sum().nlargest(5).index
+    area_filtered = area_data[area_data['primary_genre'].isin(top_genres_area)]
+    fig = px.area(area_filtered, x='year', y='revenue', color='primary_genre',
+                 title="Revenue Trends by Genre (Area Chart)",
+                 color_discrete_sequence=COLORS)
+    explain_chart("Revenue Trends by Genre (Area)", [
+        "Shows how total revenue changes over time for the top genres.",
+        "Stacked areas indicate relative contribution each year.",
+        "Use legend clicks to isolate a single genre’s trend.",
+    ])
+    style_chart(fig, 450)
+    render_chart(fig)
 
 # ============================================
 # TAB 3: FINANCIAL
 # ============================================
 with tab3:
+    st.markdown('<div id="financial" class="section-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">💵 Financial Analysis</div>', unsafe_allow_html=True)
     
     fin_col1, fin_col2 = st.columns(2)
@@ -1547,8 +1997,13 @@ with tab3:
             textposition='inside'
         ))
         fig.update_layout(title="🏆 Most Profitable", yaxis={'categoryorder': 'total ascending'})
+        explain_chart("Most Profitable (Bar)", [
+            "Ranks movies by total profit (revenue − budget).",
+            "Longer bars = higher profit; use hover to see exact values.",
+            "Great for identifying standout financial wins under your filters.",
+        ])
         style_chart(fig, 450)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with fin_col2:
         flops = filtered_df[filtered_df['budget'] > 1e7].nsmallest(10, 'profit')
@@ -1560,8 +2015,13 @@ with tab3:
             textposition='inside', textfont=dict(color='white')
         ))
         fig.update_layout(title="📉 Biggest Flops", yaxis={'categoryorder': 'total descending'})
+        explain_chart("Biggest Flops (Bar)", [
+            "Shows the largest losses among higher-budget films (budget > $10M).",
+            "Bars extend into negative values (loss).",
+            "Use it to see which big investments underperformed financially.",
+        ])
         style_chart(fig, 450)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Budget vs Revenue
     st.markdown('<div class="section-title">💰 Budget vs Revenue</div>', unsafe_allow_html=True)
@@ -1570,13 +2030,24 @@ with tab3:
     scatter = scatter_data.sample(min(400, len(scatter_data))) if len(scatter_data) > 0 else scatter_data
     fig = px.scatter(scatter, x='budget', y='revenue', color='is_profitable',
                     color_discrete_map={True: '#f59e0b', False: '#7c3aed'},
-                    hover_name='original_title', size='popularity',
+                    hover_name='original_title',
+                    hover_data={'year': True, 'primary_genre': True, 'director': True,
+                               'budget': ':$,.0f', 'revenue': ':$,.0f', 'profit': ':$,.0f',
+                               'roi': ':.0f', 'vote_average': ':.1f', 'vote_count': ':,d', 'popularity': ':.1f'},
+                    size='popularity',
                     title="Each dot is a movie • Orange = Profit, Purple = Loss")
+    add_movie_hover(fig, scatter)
     if len(scatter) > 0:
-        fig.add_trace(go.Scatter(x=[0, scatter['budget'].max()], y=[0, scatter['budget'].max()],
+        max_budget = scatter['budget'].max()
+        fig.add_trace(go.Scatter(x=[0, max_budget], y=[0, max_budget],
                                 mode='lines', name='Break-even', line=dict(dash='dash', color='#71717a')))
+    explain_chart("Budget vs Revenue (Scatter)", [
+        "Each dot is a movie: X = budget, Y = revenue.",
+        "Dashed line is the break-even reference (revenue ≈ budget). Above it generally means profit.",
+        "Color indicates profitability; dot size reflects popularity.",
+    ])
     style_chart(fig, 500)
-    st.plotly_chart(fig, use_container_width=True)
+    render_chart(fig)
     
     # Additional Financial Visualizations
     st.markdown('<div class="section-title">📊 Financial Deep Dive</div>', unsafe_allow_html=True)
@@ -1591,8 +2062,13 @@ with tab3:
                           labels={'roi': 'ROI (%)', 'count': 'Number of Movies'},
                           color_discrete_sequence=['#22d3ee'])
         fig.add_vline(x=0, line_dash="dash", line_color="#71717a", annotation_text="Break-even")
+        explain_chart("ROI Distribution (Histogram)", [
+            "Shows how return-on-investment (ROI %) is distributed across movies.",
+            "Bars = count of movies in each ROI range; the dashed line marks break-even (0%).",
+            "Use filters to see how ROI shifts by era, genre, or rating threshold.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with fin_row1_col2:
         # Profit/Loss by Decade
@@ -1611,8 +2087,13 @@ with tab3:
         ))
         fig.update_layout(title="Total Profit by Decade", yaxis_title="Profit ($)")
         fig.add_hline(y=0, line_dash="dash", line_color="#71717a")
+        explain_chart("Total Profit by Decade", [
+            "Aggregates profit for each decade (sum across all movies in that decade).",
+            "Bars above 0 = net profitable decade; below 0 = net loss.",
+            "Good for comparing eras while keeping your current filters applied.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     fin_row2_col1, fin_row2_col2 = st.columns(2)
     
@@ -1633,8 +2114,13 @@ with tab3:
             ))
             fig.update_layout(title="💰 Most Budget-Efficient Movies (Revenue per $)", 
                             yaxis={'categoryorder': 'total ascending'})
+            explain_chart("Most Budget‑Efficient (Bar)", [
+                "Efficiency here is revenue divided by budget (how many dollars earned per $1 spent).",
+                "Higher bars mean better budget efficiency.",
+                "Use it to find lean productions that generated strong box office relative to spend.",
+            ])
             style_chart(fig, 450)
-            st.plotly_chart(fig, use_container_width=True)
+            render_chart(fig)
     
     with fin_row2_col2:
         # Cumulative Revenue Over Time
@@ -1653,13 +2139,19 @@ with tab3:
         ))
         fig.update_layout(title="📈 Cumulative Revenue Over Time",
                           yaxis_title="Cumulative Revenue ($)")
+        explain_chart("Cumulative Revenue Over Time", [
+            "Shows running total of revenue as years progress (cumulative sum).",
+            "Steeper slope = faster revenue accumulation in those periods.",
+            "Use it to see long-term growth under your current filters.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
 
 # ============================================
 # TAB 4: GENRES
 # ============================================
 with tab4:
+    st.markdown('<div id="genres" class="section-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🎭 Genre Analysis</div>', unsafe_allow_html=True)
     
     genre_stats = filtered_df.groupby('primary_genre').agg({
@@ -1668,15 +2160,20 @@ with tab4:
     }).reset_index()
     genre_stats.columns = ['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']
 
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
     
-with col1:
+    with col1:
         fig = px.treemap(genre_stats, path=['Genre'], values='Total Rev', color='Avg Rating',
                         color_continuous_scale='Teal', title="Market Share (size = revenue, color = rating)")
+        explain_chart("Genre Market Share (Treemap)", [
+            "Each rectangle is a genre; area = total revenue (market share).",
+            "Color encodes average rating (lighter/darker indicates higher/lower depending on scale).",
+            "Use it to compare both popularity (size) and perceived quality (color).",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
-with col2:
+    with col2:
         top_g = genre_stats.nlargest(8, 'Count')
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
@@ -1685,8 +2182,13 @@ with col2:
         ))
         fig.update_layout(title="Genre Quality Radar",
                          polar=dict(radialaxis=dict(range=[5, 8], gridcolor='#3f3f46'), bgcolor='#27272a'))
+        explain_chart("Genre Quality Radar", [
+            "Each spoke is a genre; distance from center = average rating.",
+            "Larger shape means higher average ratings across the selected genres.",
+            "Best for quick, high-level comparison (not distribution).",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Additional Genre Visualizations
     st.markdown('<div class="section-title">🎨 Genre Analytics</div>', unsafe_allow_html=True)
@@ -1695,23 +2197,41 @@ with col2:
     
     with genre_row1_col1:
         # Genre Performance Matrix (Heatmap)
-        genre_matrix = filtered_df.groupby(['primary_genre', 'decade']).agg({
-            'revenue': 'mean',
-            'vote_average': 'mean'
-        }).reset_index()
-        top_genres_m = genre_matrix.groupby('primary_genre')['revenue'].sum().nlargest(8).index
-        matrix_data = genre_matrix[genre_matrix['primary_genre'].isin(top_genres_m)]
-        matrix_pivot = matrix_data.pivot(index='primary_genre', columns='decade', values='revenue').fillna(0)
-        fig = go.Figure(data=go.Heatmap(
-            z=matrix_pivot.values,
-            x=matrix_pivot.columns,
-            y=matrix_pivot.index,
-            colorscale='Teal',
-            colorbar=dict(title="Avg Revenue ($)")
-        ))
-        fig.update_layout(title="Genre Performance by Decade (Heatmap)", height=400)
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        if len(filtered_df) > 0:
+            genre_matrix = filtered_df.groupby(['primary_genre', 'decade']).agg({
+                'revenue': 'mean',
+                'vote_average': 'mean'
+            }).reset_index()
+            if len(genre_matrix) > 0:
+                top_genres_m = genre_matrix.groupby('primary_genre')['revenue'].sum().nlargest(8).index
+                matrix_data = genre_matrix[genre_matrix['primary_genre'].isin(top_genres_m)]
+                if len(matrix_data) > 0:
+                    matrix_pivot = matrix_data.pivot(index='primary_genre', columns='decade', values='revenue').fillna(0)
+                    fig = go.Figure(data=go.Heatmap(
+                        z=matrix_pivot.values,
+                        x=matrix_pivot.columns,
+                        y=matrix_pivot.index,
+                        colorscale='Teal',
+                        colorbar=dict(title="Avg Revenue ($)")
+                    ))
+                    # Force clear hover tooltips (Genre / Decade / Avg Revenue)
+                    fig.update_traces(
+                        hovertemplate="Genre: %{y}<br>Decade: %{x}<br>Avg Revenue: $%{z:,.0f}<extra></extra>"
+                    )
+                    fig.update_layout(title="Genre Performance by Decade (Heatmap)", height=400)
+                    explain_chart("Genre Performance by Decade (Heatmap)", [
+                        "Rows = genres; columns = decades; color = average revenue for that genre/decade.",
+                        "Use it to spot which genres dominated which eras.",
+                        "Hover a cell for exact values.",
+                    ])
+                    style_chart(fig, 400)
+                    render_chart(fig)
+                else:
+                    st.info("No genre matrix data available.")
+            else:
+                st.info("No genre data available.")
+        else:
+            st.info("No data available for genre heatmap.")
     
     with genre_row1_col2:
         # Stacked Bar - Genre Revenue Over Time
@@ -1721,33 +2241,40 @@ with col2:
         fig = px.bar(stacked_data, x='year', y='revenue', color='primary_genre',
                     title="Genre Revenue Over Time (Stacked)",
                     color_discrete_sequence=COLORS)
+        explain_chart("Genre Revenue Over Time (Stacked Bars)", [
+            "Each bar is a year; colored segments show how each top genre contributed to revenue that year.",
+            "Taller bars mean higher total revenue; segment thickness shows genre contribution.",
+            "Click legend items to focus on specific genres.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
-    genre_row2_col1, genre_row2_col2 = st.columns(2)
-    
-    with genre_row2_col1:
-        # Parallel Coordinates - Multi-dimensional Genre Comparison
-        top_genres_pc = genre_stats.nlargest(8, 'Total Rev')
-        fig = go.Figure(data=go.Parcoords(
-            line=dict(color=top_genres_pc['Avg Rating'],
-                     colorscale='Teal',
-                     showscale=True,
-                     colorbar=dict(title="Rating")),
-            dimensions=list([
-                dict(label='Total Revenue', values=top_genres_pc['Total Rev']),
-                dict(label='Avg Revenue', values=top_genres_pc['Avg Rev']),
-                dict(label='Avg Profit', values=top_genres_pc['Avg Profit']),
-                dict(label='Avg Rating', values=top_genres_pc['Avg Rating']),
-                dict(label='Success Rate', values=top_genres_pc['Success']),
-                dict(label='Count', values=top_genres_pc['Count'])
-            ])
-        ))
-        fig.update_layout(title="Multi-Dimensional Genre Comparison (Parallel Coordinates)")
-        style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with genre_row2_col2:
+    # Removed: Parallel Coordinates (per request).
+    # Keep a simpler, readable alternative: a compact metrics table + the funnel chart.
+    st.markdown("#### 📋 Top Genres (Quick Metrics)")
+    top_genres_tbl = genre_stats.nlargest(8, 'Total Rev').copy()
+    explain_chart("Top Genres (Quick Metrics Table)", [
+        "This table shows the same core genre metrics in a straightforward format.",
+        "Use Total/Avg Revenue to compare market size vs typical performance; Success Rate shows profitability share.",
+    ])
+    st.dataframe(
+        top_genres_tbl[['Genre', 'Total Rev', 'Avg Rev', 'Avg Profit', 'Avg Rating', 'Success', 'Count']]
+            .rename(columns={
+                'Total Rev': 'Total Revenue',
+                'Avg Rev': 'Avg Revenue',
+                'Avg Profit': 'Avg Profit',
+                'Avg Rating': 'Avg Rating',
+                'Success': 'Success Rate',
+                'Count': 'Movies',
+            }),
+        use_container_width=True,
+        height=280,
+    )
+
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+    # Funnel Chart - Genre Success Funnel (full width)
+    with st.container():
         # Funnel Chart - Genre Success Funnel
         funnel_data = genre_stats.nlargest(10, 'Total Rev')
         fig = go.Figure(go.Funnel(
@@ -1760,8 +2287,13 @@ with col2:
                        line=dict(color='#27272a', width=2))
         ))
         fig.update_layout(title="Genre Revenue Funnel (Top 10)")
+        explain_chart("Genre Revenue Funnel", [
+            "Ranks the top genres by total revenue from largest to smallest.",
+            "Useful for seeing concentration: how much the top few genres dominate.",
+            "Hover to see exact totals for each genre.",
+        ])
         style_chart(fig, 400)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
 
 # ============================================
 # TAB 5: VISUALIZATION CONCEPTS
@@ -1795,25 +2327,66 @@ with tab_concepts:
     col1, col2, col3 = st.columns(3)
     with col1:
         st.caption("📊 Bar: Compare categories")
-        fig = px.bar(filtered_df.groupby('primary_genre')['revenue'].sum().nlargest(5).reset_index(),
-                    x='primary_genre', y='revenue', color_discrete_sequence=['#22d3ee'])
+        # De-dup: Dashboard/Genres already show revenue-by-genre views.
+        # Use *counts* here to teach bar charts without repeating the same insight.
+        genre_counts = filtered_df['primary_genre'].value_counts().head(5).reset_index()
+        genre_counts.columns = ['primary_genre', 'count']
+        fig = px.bar(
+            genre_counts,
+            x='primary_genre',
+            y='count',
+            color_discrete_sequence=['#22d3ee']
+        )
+        explain_chart("Example: Bar Chart", [
+            "Bars compare categories (genres) by a single value (movie count).",
+            "Read the height: taller bar = larger value.",
+            "Best for quick ranking and category comparison.",
+        ])
         style_chart(fig, 220)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with col2:
         st.caption("📈 Scatter: Relationships")
-        scatter_subset = filtered_df[(filtered_df['budget']>0)&(filtered_df['revenue']>0)]
-        s = scatter_subset.sample(min(80, len(scatter_subset))) if len(scatter_subset) > 0 else scatter_subset
-        fig = px.scatter(s, x='budget', y='revenue', color_discrete_sequence=['#f59e0b'])
+        # De-dup: Budget vs Revenue is already a main chart in Financial.
+        # Teach scatter using a different relationship: runtime vs revenue.
+        scatter_subset = filtered_df[(filtered_df['runtime'] > 0) & (filtered_df['revenue'] > 0)]
+        s = scatter_subset.sample(min(120, len(scatter_subset))) if len(scatter_subset) > 0 else scatter_subset
+        fig = px.scatter(
+            s,
+            x='runtime',
+            y='revenue',
+            hover_name='original_title',
+            color_discrete_sequence=['#f59e0b'],
+            labels={'runtime': 'Runtime (min)', 'revenue': 'Revenue ($)'},
+        )
+        add_movie_hover(fig, s)
+        explain_chart("Example: Scatter Plot", [
+            "Each dot is a movie; X = runtime and Y = revenue.",
+            "Patterns show relationships (if any) and help you spot clusters/outliers.",
+            "Outliers are easy to spot: dots far from the main cluster.",
+        ])
         style_chart(fig, 220)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with col3:
         st.caption("📉 Line: Trends over time")
-        y = filtered_df.groupby('year')['revenue'].sum().reset_index()
-        fig = px.line(y, x='year', y='revenue', color_discrete_sequence=['#22d3ee'])
+        # De-dup: total revenue over time is already shown elsewhere.
+        # Teach line charts using average rating over time.
+        y = filtered_df.groupby('year')['vote_average'].mean().reset_index()
+        fig = px.line(
+            y,
+            x='year',
+            y='vote_average',
+            color_discrete_sequence=['#22d3ee'],
+            labels={'vote_average': 'Average Rating'},
+        )
+        explain_chart("Example: Line Chart", [
+            "Shows change over time; X = year and Y = average rating.",
+            "Slopes indicate improvement/decline; peaks indicate stronger-rated periods.",
+            "Great for trend detection and time comparisons.",
+        ])
         style_chart(fig, 220)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Concept 2: Color
     st.markdown("### 🎨 2. Strategic Use of Colour")
@@ -1834,8 +2407,13 @@ with tab_concepts:
         fig = px.bar(top, y='original_title', x='revenue', orientation='h',
                     color='revenue', color_continuous_scale='Teal')
         fig.update_layout(yaxis={'categoryorder':'total ascending'})
+        explain_chart("Sequential Color (Revenue)", [
+            "A single-hue gradient represents low → high values.",
+            "Good when you’re encoding magnitude (more = stronger color).",
+            "Hover to see exact values; color helps quick visual ranking.",
+        ])
         style_chart(fig, 250)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     with color_col2:
         st.caption("Diverging: Profit (orange) vs Loss (purple)")
@@ -1844,8 +2422,13 @@ with tab_concepts:
         fig = px.bar(sample, y='original_title', x='profit', orientation='h',
                     color='profit', color_continuous_scale=DIVERGING)
         fig.update_layout(yaxis={'categoryorder':'total ascending'})
+        explain_chart("Diverging Color (Profit vs Loss)", [
+            "Two-color scale shows direction around a meaningful midpoint (0 profit).",
+            "One end represents losses, the other represents gains.",
+            "Use it when values can be meaningfully ‘above vs below’ a baseline.",
+        ])
         style_chart(fig, 250)
-        st.plotly_chart(fig, use_container_width=True)
+        render_chart(fig)
     
     # Concept 3: Interactivity
     st.markdown("### 🖱️ 3. Interactive Exploration")
@@ -1882,13 +2465,19 @@ with tab_concepts:
     peak = yearly.loc[yearly['revenue'].idxmax()]
     fig.add_annotation(x=peak['year'], y=peak['revenue'], text="Peak Year ↑", showarrow=True, arrowhead=2, arrowcolor='#f59e0b')
     fig.update_layout(title="Average Revenue by Year (Annotated)")
+    explain_chart("Annotated Trend (Example)", [
+        "Reference line shows the overall average (benchmark).",
+        "Callout highlights an important event/peak so it’s not missed.",
+        "Annotations add context and guide attention to key insights.",
+    ])
     style_chart(fig, 350)
-    st.plotly_chart(fig, use_container_width=True)
+    render_chart(fig)
 
 # ============================================
 # TAB 6: EXPLORER
 # ============================================
 with tab6:
+    st.markdown('<div id="explorer" class="section-anchor"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🔍 Movie Explorer</div>', unsafe_allow_html=True)
     
     search_col1, search_col2, search_col3 = st.columns([2, 1, 1])
