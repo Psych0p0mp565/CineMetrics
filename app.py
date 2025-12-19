@@ -26,13 +26,69 @@ if "focus_mode" not in st.session_state:
 # ============================================
 st.markdown("""
     <style>
-    /* Use a fast system font stack (no external font requests) */
+    /* Cinematic theme tokens (no external fonts) */
+    :root{
+        --bg0:#050507;
+        --bg1:#0a0a0f;
+        --panel:rgba(18,18,22,0.62);
+        --panel2:rgba(10,10,12,0.72);
+        --border:rgba(255,255,255,0.06);
+        --text:#fafafa;
+        --muted:#a1a1aa;
+        --cyan:#22d3ee;
+        --amber:#f59e0b;
+        --gold:#fbbf24;
+    }
+
+    /* Typography: body = clean sans, headings = cinematic serif */
     * { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif; }
+    .title-logo, .hero-title-text, .section-title {
+        font-family: ui-serif, Georgia, "Times New Roman", Times, serif !important;
+        letter-spacing: -0.6px;
+    }
     
     /* Live Animated Background */
     .stApp {
-        background: linear-gradient(180deg, #09090b 0%, #0c0c0e 50%, #09090b 100%);
+        background: radial-gradient(1200px 600px at 50% 0%, rgba(245,158,11,0.08), transparent 60%),
+                    radial-gradient(900px 500px at 0% 100%, rgba(34,211,238,0.06), transparent 55%),
+                    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg0) 100%);
         position: relative;
+    }
+
+    /* Cinematic overlay: vignette + subtle grain (hover-safe) */
+    .cinematic-overlay{
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 1;
+    }
+    .cinematic-overlay::before{
+        content:'';
+        position:absolute;
+        inset:-10%;
+        background:
+          radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 78%),
+          radial-gradient(ellipse at top, rgba(0,0,0,0.55) 0%, transparent 55%);
+        mix-blend-mode: multiply;
+    }
+    .cinematic-overlay::after{
+        content:'';
+        position:absolute;
+        inset:0;
+        opacity: 0.06;
+        background-image:
+          repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0px, rgba(255,255,255,0.12) 1px, transparent 1px, transparent 3px),
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 4px);
+        animation: grainShift 8s steps(8) infinite;
+        mix-blend-mode: overlay;
+    }
+    @keyframes grainShift{
+        0%{ transform: translate3d(0,0,0); }
+        25%{ transform: translate3d(-6px,4px,0); }
+        50%{ transform: translate3d(6px,-5px,0); }
+        75%{ transform: translate3d(-3px,-6px,0); }
+        100%{ transform: translate3d(0,0,0); }
     }
     
     .stApp::before {
@@ -257,13 +313,13 @@ st.markdown("""
     
     /* Stat Cards - Enhanced */
     .stat-card {
-        background: linear-gradient(145deg, #27272a 0%, #1f1f23 100%);
-        border: 1px solid #3f3f46;
+        background: linear-gradient(145deg, rgba(18,18,22,0.92) 0%, rgba(10,10,12,0.92) 100%);
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 20px;
         padding: 28px 24px;
         text-align: center;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
         position: relative;
         overflow: hidden;
     }
@@ -284,9 +340,9 @@ st.markdown("""
     }
     
     .stat-card:hover {
-        border-color: #22d3ee;
+        border-color: rgba(245,158,11,0.55);
         transform: translateY(-6px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(34, 211, 238, 0.15), 0 8px 16px rgba(0,0,0,0.2);
+        box-shadow: 0 24px 55px rgba(245, 158, 11, 0.12), 0 10px 22px rgba(0,0,0,0.35);
     }
     
     /* Prevent hover effects from interfering with Plotly charts */
@@ -586,14 +642,15 @@ st.markdown("""
     }
     
     .title-logo {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #fafafa;
-        letter-spacing: -1px;
+        font-size: 2.7rem;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -1.2px;
         text-align: center;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.55);
     }
     
-    .title-logo span { color: #22d3ee; }
+    .title-logo span { color: var(--amber); }
     
     /* Section anchor offset to account for sticky header/tabs */
     .section-anchor {
@@ -1386,6 +1443,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Cinematic overlay (vignette + subtle grain). Pointer-events: none, so hover/scroll are unaffected.
+st.markdown('<div class="cinematic-overlay"></div>', unsafe_allow_html=True)
+
 # Performance mode: disable expensive background animations (UI only)
 if st.session_state.get("perf_mode", True):
     st.markdown(
@@ -1394,6 +1454,7 @@ if st.session_state.get("perf_mode", True):
         .stApp::after { display: none !important; } /* particle layer */
         .stApp::before { animation: none !important; } /* gradient shift */
         .shape { animation: none !important; } /* floating blobs */
+        .cinematic-overlay::after { animation: none !important; opacity: 0.03 !important; } /* grain */
         </style>
         """,
         unsafe_allow_html=True,
